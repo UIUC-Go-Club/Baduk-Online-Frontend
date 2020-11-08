@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Input, Button, Row, Col } from 'antd';
+import { Form, Input, Button, Col } from 'antd';
 import { DesktopOutlined, UserOutlined } from '@ant-design/icons';
 
 import { Redirect } from 'react-router-dom';

@@ -3,7 +3,7 @@ import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
-import { Button, Switch } from 'antd';
+import { Button, Switch, Row, Col, Card } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { socket } from "./api";
 
@@ -22,15 +22,15 @@ function signToColor(sign) {
     }
 }
 
-const createTwoWaySwitch = component => ({ stateKey, text, checked}) => {
-    return(
+const createTwoWaySwitch = component => ({ stateKey, text, checked }) => {
+    return (
         <label>
             <Switch
-                        checkedChildren={<CheckOutlined />}
-                        unCheckedChildren={<CloseOutlined />}
-                        defaultChecked={checked}
-                        onClick={() => component.setState(s => ({[stateKey]: !s[stateKey]}))}
-                    />
+                checkedChildren={<CheckOutlined />}
+                unCheckedChildren={<CloseOutlined />}
+                defaultChecked={checked}
+                onClick={() => component.setState(s => ({ [stateKey]: !s[stateKey] }))}
+            />
             <span>{text}</span>
         </label>
     )
@@ -42,11 +42,15 @@ class Game extends React.Component {
         this.state = {
             board: new Board(startMap(defaultSize)),
             currPlayer: 1,
-            locked: false,
+            locked: true,
             boardSize: defaultSize,
             showCoordinates: true,
             animated: false,
-            realisticPlacement: false
+            realisticPlacement: false,
+            player1: 'player1',
+            player2: 'player2',
+            sign1: 1,
+            sign2: -1
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
@@ -76,23 +80,54 @@ class Game extends React.Component {
         })
         socket.on('game start', (data) => {
             const { currPlayer, currSign, opponent } = data;
-            console.log(`opponent name is ${opponent} playing `);
+            console.log(`opponent name is ${opponent}`);
             if (currSign === 1) {
                 this.setState({
                     opponent: opponent,
                     player1: currPlayer,
-                    player2: opponent
+                    player2: opponent,
+                    locked: false
                 })
+                console.log('you go first')
             } else {
                 this.setState({
                     opponent: opponent,
                     player2: currPlayer,
-                    player1: opponent
+                    player1: opponent,
+                    locked: true
                 })
+                console.log('opponent go first')
             }
         })
 
-        socket.on('game end')
+        socket.on('pass', () => {
+            console.log('opponent passed');
+            this.setState({
+                currPlayer: this.state.currPlayer * -1,
+                locked: false
+            })
+        })
+
+        socket.on('game end', () => {
+            // TODO implement game end 
+            console.log('game end agreed by both player');
+            this.setState({
+                end: true
+            })
+        })
+
+        socket.on('terr count', () => {
+            // TODO implement terr count 
+            console.log('opponent propose to count territories');
+        })
+
+        socket.on('resign', () => {
+            // TODO implment win message
+            console.log('opponent resigned')
+            this.setState({
+                end: true
+            })
+        })
     }
 
     /**
@@ -134,22 +169,46 @@ class Game extends React.Component {
         })
     }
 
+    pass = () => {
+        this.setState({
+            currPlayer: this.state.currPlayer * -1,
+            locked: true
+        })
+        socket.emit('pass');
+        console.log(`you passed`);
+    }
+
+    resign = () => {
+        this.setState({
+            end: true
+        })
+        socket.emit('resign');
+        console.log(`you resigned`);
+    }
+
+    countTerr = () => {
+        this.setState({
+            locked: true
+        })
+        socket.emit('terr count');
+    }
+
+    regret = () => {
+        socket.emit('regret');
+    }
+
     /**
      * player color toString
      */
     getPlayer = () => {
-        if (this.state.currPlayer === 1) {
-            return "Black";
-        } else {
-            return 'White';
-        }
+        return (signToColor(this.state.currPlayer));
     }
 
     /**
      * getter for state.locked 
      */
     getLocked = () => {
-        return (signToColor(this.state.currPlayer))
+        return (this.state.locked)
     }
 
     render() {
@@ -157,30 +216,74 @@ class Game extends React.Component {
             board,
             showCoordinates,
             realisticPlacement,
-            animated
-          } = this.state
+            animated,
+            player1,
+            player2,
+            sign1,
+            sign2
+        } = this.state
         return (
-            <div>
-                <div>
-                    <this.toggleSwitch stateKey={'showCoordinates'} text={'show coordinates'} checked={true}></this.toggleSwitch>
-                    <this.toggleSwitch stateKey={'realisticPlacement'} text={'realistic stone placement'} checked={false}></this.toggleSwitch>
-                    <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
-                </div>
-                <div class='board'>
-                    <Goban vertexSize={30} 
-                    signMap={board.signMap} 
-                    showCoordinates={showCoordinates}
-                    fuzzyStonePlacement={realisticPlacement}
-                    animateStonePlacement={animated}
-                    onVertexMouseUp={this.mouseClick} />
-                </div>
-                <div>
-                    Current Player is {this.getPlayer()}
-                    <br />
-                    Board is {this.getLocked()}
-                </div>
-                <Button onClick={this.resetBoard}>Debug.reset</Button>
-            </div>
+            <Row>
+                <Col span={12}>
+                    <Goban vertexSize={30}
+                        signMap={board.signMap}
+                        showCoordinates={showCoordinates}
+                        fuzzyStonePlacement={realisticPlacement}
+                        animateStonePlacement={animated}
+                        onVertexMouseUp={this.mouseClick} />
+                </Col>
+                <Col span={12}>
+                    <Row>
+                        <Col>
+                            <Card title={player1} style={{ width: 300 }}>
+                                <p>Rank: </p>
+                                <p>Remaining Time: 10:00</p>
+                                <p>Playing {signToColor(sign1)}</p>
+                            </Card>
+                        </Col>
+                        <Col>
+                            <Card title={player2} style={{ width: 300 }}>
+                                <p>Rank: </p>
+                                <p>Remaining Time: 10:00</p>
+                                <p>Playing {signToColor(sign2)}</p>
+                            </Card>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <this.toggleSwitch stateKey={'showCoordinates'} text={'show coordinates'} checked={true}></this.toggleSwitch>
+                    </Row>
+                    <Row>
+                        <this.toggleSwitch stateKey={'realisticPlacement'} text={'realistic stone placement'} checked={false}></this.toggleSwitch>
+                    </Row>
+                    <Row>
+                        <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
+                    </Row>
+                    <Row>
+                        Current Player is {this.getPlayer()}
+                    </Row>
+                    <Row>
+                        Board is {this.getLocked()}
+                    </Row>
+                    <Row>
+                        <Col>
+                        <Button onClick={this.pass}>Pass</Button>
+                        </Col>
+                        <Col>
+                        <Button onClick={this.regret}>Regret</Button>
+                        </Col>
+                        <Col>
+                        <Button onClick={this.resign}>Resign</Button>
+                        </Col>
+                        <Col>
+                        <Button onClick={this.countTerr}>Count Territories</Button>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Button onClick={this.resetBoard}>Debug.reset</Button>
+                    </Row>
+                </Col>
+
+            </Row>
 
         )
     }
