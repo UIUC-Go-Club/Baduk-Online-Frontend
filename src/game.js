@@ -4,6 +4,8 @@ import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
 import { Button } from 'antd';
+import clientio  from 'socket.io-client';
+import {SERVER_ADDRESS} from './config.js';
 
 const defaultSize = 19
 // const signMap = startMap(defaultSize)
@@ -19,10 +21,44 @@ class Game extends React.Component {
             board: new Board(startMap(defaultSize)),
             currPlayer: 1,
             locked: false,
-            boardSize: defaultSize
+            boardSize: defaultSize,
         }
     }
 
+    socket;
+
+    componentDidMount() {
+        this.configureSocket();
+    }
+
+    configureSocket = () => {
+        var socket = clientio(SERVER_ADDRESS);
+        socket.on('connect_error', () => {
+            console.log('connect_error');
+        })
+        socket.on('reconnect_error', () => {
+            console.log('reconnect_error')
+        })
+        socket.on('connect', () => {console.log(socket.id)});
+        socket.on('move', (data) => {
+            const { sign, x, y } = data;
+            console.log(`received move sign: ${sign}, [x,y]: [${x}, ${y}]`);
+            let newBoard = this.state.board.makeMove(sign, [x, y])
+            this.setState({
+                board: newBoard,
+                currPlayer: this.state.currPlayer * -1,
+                locked: false
+            })
+        })
+        this.socket = socket;
+    }
+
+    /**
+     * used when mouse clicked on board, used by Board's onVertexMouseUp
+     * @param {*} evt mouse event
+     * @param {*} x coord pair
+     * @param {*} y coord pair
+     */
     mouseClick = (evt, [x, y]) => {
         let sign = this.state.currPlayer;
         if (!this.state.locked) {
@@ -33,6 +69,8 @@ class Game extends React.Component {
                     currPlayer: this.state.currPlayer * -1,
                     locked: true
                 })
+                this.socket.emit('move', {sign: sign, x: x, y: y})
+                console.log('sent move to server');
             } catch (e) {
                 console.error(e);
             }
@@ -53,6 +91,9 @@ class Game extends React.Component {
         })
     }
 
+    /**
+     * player color toString
+     */
     getPlayer = () => {
         if (this.state.currPlayer === 1) {
             return "Black";
@@ -61,6 +102,9 @@ class Game extends React.Component {
         }
     }
 
+    /**
+     * getter for state.locked 
+     */
     getLocked = () => {
         if (this.state.locked === true) {
             return "locked";
