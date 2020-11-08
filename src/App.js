@@ -2,7 +2,7 @@ import React from 'react';
 import 'antd/dist/antd.css';
 import './App.css';
 import { Layout, Menu } from 'antd';
-import { HomeOutlined, UserOutlined } from '@ant-design/icons';
+import { DesktopOutlined, UserOutlined } from '@ant-design/icons';
 import {
     BrowserRouter as Router,
     Switch,
@@ -42,7 +42,7 @@ class App extends React.Component {
                     <Sider collapsible collapsed={collapsed} onCollapse={this.onCollapse}>
                         <div className="logo" />
                         <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
-                            <Menu.Item key="Home" icon={<HomeOutlined />}>
+                            <Menu.Item key="Home" icon={<DesktopOutlined />}>
                                 <Link to='game'>
                                     Game
                                 </Link>

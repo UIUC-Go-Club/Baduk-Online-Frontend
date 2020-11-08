@@ -1,4 +1,4 @@
-import React, { createElement as ce, Component } from 'react';
+import React from 'react';
 import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
@@ -21,27 +21,6 @@ function signToColor(sign) {
         return 'White';
     }
 }
-
-// const createTwoWaySwitch = component => ({ stateKey, text }) =>
-// ce(
-//     'label',
-//     {
-//         style: {
-//             display: 'flex',
-//             alignItems: 'center'
-//         }
-//     },
-
-//     ce('input', {
-//         style: { marginRight: '.5em' },
-//         type: 'checkbox',
-//         checked: component.state[stateKey],
-
-//         onClick: () => component.setState(s => ({ [stateKey]: !s[stateKey] }))
-//     }),
-
-//     ce('span', { style: { userSelect: 'none' } }, text)
-// )
 
 const createTwoWaySwitch = component => ({ stateKey, text, checked}) => {
     return(
@@ -188,7 +167,7 @@ class Game extends React.Component {
                     <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
                 </div>
                 <div class='board'>
-                    <Goban vertexSize={24} 
+                    <Goban vertexSize={30} 
                     signMap={board.signMap} 
                     showCoordinates={showCoordinates}
                     fuzzyStonePlacement={realisticPlacement}
