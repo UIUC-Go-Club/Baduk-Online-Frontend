@@ -3,15 +3,23 @@ import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
-import { Button } from 'antd';
-import clientio  from 'socket.io-client';
-import {SERVER_ADDRESS} from './config.js';
+import { Button, Switch } from 'antd';
+import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import {socket} from "./api";
 
 const defaultSize = 19
 // const signMap = startMap(defaultSize)
 
 function startMap(size) {
     return new Array(size).fill(0).map(() => new Array(size).fill(0));
+}
+
+function signToColor(sign) {
+    if (sign === 1) {
+        return "Black";
+    } else {
+        return 'White';
+    }
 }
 
 class Game extends React.Component {
@@ -25,14 +33,13 @@ class Game extends React.Component {
         }
     }
 
-    socket;
 
     componentDidMount() {
         this.configureSocket();
     }
 
     configureSocket = () => {
-        var socket = clientio(SERVER_ADDRESS);
+        
         socket.on('connect_error', () => {
             console.log('connect_error');
         })
@@ -50,7 +57,25 @@ class Game extends React.Component {
                 locked: false
             })
         })
-        this.socket = socket;
+        socket.on('game start', (data)=> {
+            const {currPlayer, currSign, opponent } = data;
+            console.log(`opponent name is ${opponent} playing `);
+            if (currSign === 1) {
+                this.setState({
+                    opponent: opponent,
+                    player1: currPlayer,
+                    player2: opponent
+                })
+            } else {
+                this.setState({
+                    opponent: opponent,
+                    player2: currPlayer,
+                    player1: opponent
+                })
+            }
+        })
+
+        socket.on('game end')
     }
 
     /**
@@ -61,7 +86,7 @@ class Game extends React.Component {
      */
     mouseClick = (evt, [x, y]) => {
         let sign = this.state.currPlayer;
-        if (!this.state.locked) {
+        if (!this.state.locked && !this.state.end) {
             try {
                 let newBoard = this.state.board.makeMove(sign, [x, y], { preventOverwrite: true })
                 this.setState({
@@ -69,7 +94,7 @@ class Game extends React.Component {
                     currPlayer: this.state.currPlayer * -1,
                     locked: true
                 })
-                this.socket.emit('move', {sign: sign, x: x, y: y})
+                socket.emit('move', {sign: sign, x: x, y: y})
                 console.log('sent move to server');
             } catch (e) {
                 console.error(e);
@@ -87,7 +112,8 @@ class Game extends React.Component {
         this.setState({
             board: new Board(newMap),
             currPlayer: 1,
-            locked: false
+            locked: false,
+            end: false
         })
     }
 
@@ -106,17 +132,18 @@ class Game extends React.Component {
      * getter for state.locked 
      */
     getLocked = () => {
-        if (this.state.locked === true) {
-            return "locked";
-        } else {
-            return "not locked";
-        }
+        return(signToColor(this.state.currPlayer))
     }
 
     render() {
         return (
             <div>
-                <Goban vertexSize={24} signMap={this.state.board.signMap} onVertexMouseUp={this.mouseClick} />
+                <div>
+
+                </div>
+                <div class='board'>
+                    <Goban vertexSize={24} signMap={this.state.board.signMap} onVertexMouseUp={this.mouseClick} />
+                </div>
                 <div>
                     Current Player is {this.getPlayer()}
                     <br/>

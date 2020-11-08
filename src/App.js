@@ -11,6 +11,8 @@ import {
 } from "react-router-dom";
 import Game from './game.js'
 import Profile from './profile'
+import SignIn from './signinpage';
+
 
 const { Header, Content, Footer, Sider } = Layout;
 // const { SubMenu } = Menu;
@@ -41,7 +43,7 @@ class App extends React.Component {
                         <div className="logo" />
                         <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
                             <Menu.Item key="Home" icon={<HomeOutlined />}>
-                                <Link to=''>
+                                <Link to='game'>
                                     Game
                                 </Link>
                             </Menu.Item>
@@ -58,6 +60,9 @@ class App extends React.Component {
                             <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
                             <Switch>
                                 <Route exact path="/">
+                                    <SignIn />
+                                </Route>
+                                <Route path="/game">
                                     <Game />
                                 </Route>
                                 <Route path="/profile">

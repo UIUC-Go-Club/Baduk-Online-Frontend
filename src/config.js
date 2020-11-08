@@ -1,3 +1,3 @@
-const SERVER_ADDRESS = 'http://localhost:7777/'
+const SERVER_URL = 'http://localhost:7777/'
 
-export {SERVER_ADDRESS}
+export {SERVER_URL}
