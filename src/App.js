@@ -1,36 +1,25 @@
 import React from 'react';
-import { Goban } from '@sabaki/shudan'
-import '@sabaki/shudan/css/goban.css'
-import '@sabaki/go-board'
-import GoBoard from '@sabaki/go-board';
+import 'antd/dist/antd.css';
+import './App.css';
+import { Layout, Menu } from 'antd';
+import { HomeOutlined, UserOutlined } from '@ant-design/icons';
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link
+} from "react-router-dom";
+import Game from './game.js'
+import Profile from './profile'
 
-const signMap = [
-    [ 0, 0, 0,-1,-1,-1, 1, 0, 1, 1,-1,-1, 0,-1, 0,-1,-1, 1, 0],
-    [ 0, 0,-1, 0,-1, 1, 1, 1, 0, 1,-1, 0,-1,-1,-1,-1, 1, 1, 0],
-    [ 0, 0,-1,-1,-1, 1, 1, 0, 0, 1, 1,-1,-1, 1,-1, 1, 0, 1, 0],
-    [ 0, 0, 0, 0,-1,-1, 1, 0, 1,-1, 1, 1, 1, 1, 1, 0, 1, 0, 0],
-    [ 0, 0, 0, 0,-1, 0,-1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0],
-    [ 0, 0,-1, 0, 0,-1,-1, 1, 0,-1,-1, 1,-1,-1, 0, 1, 0, 0, 1],
-    [ 0, 0, 0,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1,-1, 1, 1, 1],
-    [ 0, 0,-1, 1, 1, 0, 1,-1,-1, 1, 0, 1,-1, 0, 1,-1,-1,-1, 1],
-    [ 0, 0,-1,-1, 1, 1, 1, 0,-1, 1,-1,-1, 0,-1,-1, 1, 1, 1, 1],
-    [ 0, 0,-1, 1, 1,-1,-1,-1,-1, 1, 1, 1,-1,-1,-1,-1, 1,-1,-1],
-    [-1,-1,-1,-1, 1, 1, 1,-1, 0,-1, 1,-1,-1, 0,-1, 1, 1,-1, 0],
-    [-1, 1,-1, 0,-1,-1,-1,-1,-1,-1, 1,-1, 0,-1,-1, 1,-1, 0,-1],
-    [ 1, 1, 1, 1,-1, 1, 1, 1,-1, 1, 0, 1,-1, 0,-1, 1,-1,-1, 0],
-    [ 0, 1,-1, 1, 1,-1,-1, 1,-1, 1, 1, 1,-1, 1,-1, 1, 1,-1, 1],
-    [ 0, 0,-1, 1, 0, 0, 1, 1,-1,-1, 0, 1,-1, 1,-1, 1,-1, 0,-1],
-    [ 0, 0, 1, 0, 1, 0, 1, 1, 1,-1,-1, 1,-1,-1, 1,-1,-1,-1, 0],
-    [ 0, 0, 0, 0, 1, 1, 0, 1,-1, 0,-1,-1, 1, 1, 1, 1,-1,-1,-1],
-    [ 0, 0, 1, 1,-1, 1, 1,-1, 0,-1,-1, 1, 1, 1, 1, 0, 1,-1, 1],
-    [ 0, 0, 0, 1,-1,-1,-1,-1,-1, 0,-1,-1, 1, 1, 0, 1, 1, 1, 0]
-]
+const { Header, Content, Footer, Sider } = Layout;
+// const { SubMenu } = Menu;
+
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            board: new GoBoard(signMap),
-            currPlayer : 1
+            collapsed: false,
         }
     }
 
@@ -38,35 +27,49 @@ class App extends React.Component {
 
     }
 
-    mouseClick = (evt, [x, y]) => {
-        let sign = this.state.currPlayer;
-        try {
-            let newBoard = this.state.board.makeMove(sign, [x, y], {preventOverwrite:true})
-            this.setState({
-                board: newBoard,
-                currPlayer: this.state.currPlayer * -1
-            })
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    getPlayer = () => {
-        if (this.state.currPlayer === 1) {
-            return "Black";
-        } else {
-            return 'White';
-        }
-    }
+    onCollapse = collapsed => {
+        console.log(collapsed);
+        this.setState({ collapsed });
+    };
 
     render() {
+        const { collapsed } = this.state;
         return (
-            <div className="App">
-                <Goban vertexSize={24} signMap={this.state.board.signMap} onVertexMouseUp={this.mouseClick}/>
-                <div>
-                    Current Player is {this.getPlayer()}
-                </div>
-            </div>
+            <Router>
+                <Layout style={{ minHeight: '100vh' }}>
+                    <Sider collapsible collapsed={collapsed} onCollapse={this.onCollapse}>
+                        <div className="logo" />
+                        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
+                            <Menu.Item key="Home" icon={<HomeOutlined />}>
+                                <Link to=''>
+                                    Game
+                                </Link>
+                            </Menu.Item>
+                            <Menu.Item key="User" icon={<UserOutlined />}>
+                                <Link to='profile'>
+                                    Profile
+                                </Link>
+                            </Menu.Item>
+                        </Menu>
+                    </Sider>
+                    <Layout className="site-layout">
+                        <Header className="site-layout-background" style={{ padding: 0 }} />
+                        <Content>
+                            <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
+                            <Switch>
+                                <Route exact path="/">
+                                    <Game />
+                                </Route>
+                                <Route path="/profile">
+                                    <Profile />
+                                </Route>
+                            </Switch>
+                            </div>
+                        </Content>
+                        <Footer style={{ textAlign: 'center' }}>Baduk Online Go @2020 Created by Ziyang Yu</Footer>
+                    </Layout>
+                </Layout>
+            </Router>
         );
     }
 }
