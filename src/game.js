@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { createElement as ce, Component } from 'react';
 import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
 import { Button, Switch } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
-import {socket} from "./api";
+import { socket } from "./api";
 
 const defaultSize = 19
 // const signMap = startMap(defaultSize)
@@ -22,6 +22,41 @@ function signToColor(sign) {
     }
 }
 
+// const createTwoWaySwitch = component => ({ stateKey, text }) =>
+// ce(
+//     'label',
+//     {
+//         style: {
+//             display: 'flex',
+//             alignItems: 'center'
+//         }
+//     },
+
+//     ce('input', {
+//         style: { marginRight: '.5em' },
+//         type: 'checkbox',
+//         checked: component.state[stateKey],
+
+//         onClick: () => component.setState(s => ({ [stateKey]: !s[stateKey] }))
+//     }),
+
+//     ce('span', { style: { userSelect: 'none' } }, text)
+// )
+
+const createTwoWaySwitch = component => ({ stateKey, text, checked}) => {
+    return(
+        <label>
+            <Switch
+                        checkedChildren={<CheckOutlined />}
+                        unCheckedChildren={<CloseOutlined />}
+                        defaultChecked={checked}
+                        onClick={() => component.setState(s => ({[stateKey]: !s[stateKey]}))}
+                    />
+            <span>{text}</span>
+        </label>
+    )
+}
+
 class Game extends React.Component {
     constructor(props) {
         super(props);
@@ -30,23 +65,26 @@ class Game extends React.Component {
             currPlayer: 1,
             locked: false,
             boardSize: defaultSize,
+            showCoordinates: true,
+            animated: false,
+            realisticPlacement: false
         }
+        this.toggleSwitch = createTwoWaySwitch(this);
     }
-
 
     componentDidMount() {
         this.configureSocket();
     }
 
     configureSocket = () => {
-        
+
         socket.on('connect_error', () => {
             console.log('connect_error');
         })
         socket.on('reconnect_error', () => {
             console.log('reconnect_error')
         })
-        socket.on('connect', () => {console.log(socket.id)});
+        socket.on('connect', () => { console.log(socket.id) });
         socket.on('move', (data) => {
             const { sign, x, y } = data;
             console.log(`received move sign: ${sign}, [x,y]: [${x}, ${y}]`);
@@ -57,8 +95,8 @@ class Game extends React.Component {
                 locked: false
             })
         })
-        socket.on('game start', (data)=> {
-            const {currPlayer, currSign, opponent } = data;
+        socket.on('game start', (data) => {
+            const { currPlayer, currSign, opponent } = data;
             console.log(`opponent name is ${opponent} playing `);
             if (currSign === 1) {
                 this.setState({
@@ -94,13 +132,13 @@ class Game extends React.Component {
                     currPlayer: this.state.currPlayer * -1,
                     locked: true
                 })
-                socket.emit('move', {sign: sign, x: x, y: y})
+                socket.emit('move', { sign: sign, x: x, y: y })
                 console.log('sent move to server');
             } catch (e) {
                 console.error(e);
             }
         }
-        
+
     }
 
     /**
@@ -132,26 +170,39 @@ class Game extends React.Component {
      * getter for state.locked 
      */
     getLocked = () => {
-        return(signToColor(this.state.currPlayer))
+        return (signToColor(this.state.currPlayer))
     }
 
     render() {
+        let {
+            board,
+            showCoordinates,
+            realisticPlacement,
+            animated
+          } = this.state
         return (
             <div>
                 <div>
-
+                    <this.toggleSwitch stateKey={'showCoordinates'} text={'show coordinates'} checked={true}></this.toggleSwitch>
+                    <this.toggleSwitch stateKey={'realisticPlacement'} text={'realistic stone placement'} checked={false}></this.toggleSwitch>
+                    <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
                 </div>
                 <div class='board'>
-                    <Goban vertexSize={24} signMap={this.state.board.signMap} onVertexMouseUp={this.mouseClick} />
+                    <Goban vertexSize={24} 
+                    signMap={board.signMap} 
+                    showCoordinates={showCoordinates}
+                    fuzzyStonePlacement={realisticPlacement}
+                    animateStonePlacement={animated}
+                    onVertexMouseUp={this.mouseClick} />
                 </div>
                 <div>
                     Current Player is {this.getPlayer()}
-                    <br/>
+                    <br />
                     Board is {this.getLocked()}
                 </div>
                 <Button onClick={this.resetBoard}>Debug.reset</Button>
             </div>
-            
+
         )
     }
 }
