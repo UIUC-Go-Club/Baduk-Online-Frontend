@@ -190,10 +190,9 @@ class Game extends React.Component {
 
     pass = () => {
         this.setState({
-            currColor: this.state.currColor * -1,
             locked: true
         })
-        socket.emit('pass');
+        socket.emit('move', { room_id: this.state.room_id, sign: 0, vertex: [-1,-1]})
         console.log(`you passed`);
     }
 
