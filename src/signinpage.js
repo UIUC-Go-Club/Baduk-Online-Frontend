@@ -32,6 +32,10 @@ class SignIn extends React.Component {
         this.socketListeners();
     }
 
+    componentWillUnmount() {
+        // this.props.history.goForward();
+    }
+
     socketListeners = () => {
     }
 
@@ -40,7 +44,8 @@ class SignIn extends React.Component {
         const nickname = values.nickname;
         const room = values.room;
         console.log(`login with nickname ${nickname} to room ${room}`);
-        socket.emit('join room', { nickname, room });
+        socket.emit('join_room_player', { username: nickname, room_id : room });
+        this.props.cb(nickname);
         this.setState({submitted:true})
     };
 

@@ -8,7 +8,6 @@ import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { socket } from "./api";
 
 const defaultSize = 19
-// const signMap = startMap(defaultSize)
 
 function startMap(size) {
     return new Array(size).fill(0).map(() => new Array(size).fill(0));
@@ -16,9 +15,9 @@ function startMap(size) {
 
 function signToColor(sign) {
     if (sign === 1) {
-        return "Black";
+        return "black";
     } else {
-        return 'White';
+        return 'white';
     }
 }
 
@@ -41,22 +40,27 @@ class Game extends React.Component {
         super(props);
         this.state = {
             board: new Board(startMap(defaultSize)),
-            currPlayer: 1,
+            currColor: 1,
             locked: true,
             boardSize: defaultSize,
             showCoordinates: true,
             animated: false,
             realisticPlacement: false,
-            player1: 'player1',
-            player2: 'player2',
-            sign1: 1,
-            sign2: -1
+            room_id: -1,
+            player1: {username: 'player1'},
+            player2: {username: 'player2'},
+            myname: '',
+            mycolor: ''
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
 
     componentDidMount() {
         this.configureSocket();
+    }
+
+    componentWillUnmount() {
+        // this.props.history.goForward();
     }
 
     configureSocket = () => {
@@ -68,42 +72,50 @@ class Game extends React.Component {
             console.log('reconnect_error')
         })
         socket.on('connect', () => { console.log(socket.id) });
+        // receive uptated board from server
         socket.on('move', (data) => {
-            const { sign, x, y } = data;
-            console.log(`received move sign: ${sign}, [x,y]: [${x}, ${y}]`);
-            let newBoard = this.state.board.makeMove(sign, [x, y])
+            const map = JSON.parse(data);
+            console.log(`received move`);
+            let newBoard = new Board(map)
             this.setState({
                 board: newBoard,
-                currPlayer: this.state.currPlayer * -1,
-                locked: false
+                currColor: this.state.currColor * -1
             })
-        })
-        socket.on('game start', (data) => {
-            const { currPlayer, currSign, opponent } = data;
-            console.log(`opponent name is ${opponent}`);
-            if (currSign === 1) {
+            if (signToColor(this.state.currColor) === this.state.mycolor) {
                 this.setState({
-                    opponent: opponent,
-                    player1: currPlayer,
-                    player2: opponent,
                     locked: false
                 })
-                console.log('you go first')
+            }
+        })
+        socket.on('info', (data) => {
+            const { username } = data;
+            this.setState({myname : username});
+        })
+        socket.on('game start', (data) => {
+            const room = JSON.parse(data);
+            let {room_id, players} = room;
+            // this.setState({room: room});
+            this.setState({
+                room_id : room_id,
+                player1: players[0],
+                player2: players[1],
+            })
+            if (this.state.myname === this.state.player1.username) {
+                this.setState({mycolor: this.state.player1.color})
             } else {
+                this.setState({mycolor: this.state.player2.color})
+            }
+            if (this.state.mycolor === 'black') {
                 this.setState({
-                    opponent: opponent,
-                    player2: currPlayer,
-                    player1: opponent,
-                    locked: true
+                    locked: false
                 })
-                console.log('opponent go first')
             }
         })
 
         socket.on('pass', () => {
             console.log('opponent passed');
             this.setState({
-                currPlayer: this.state.currPlayer * -1,
+                currColor: this.state.currColor * -1,
                 locked: false
             })
         })
@@ -111,6 +123,13 @@ class Game extends React.Component {
         socket.on('game end', () => {
             // TODO implement game end 
             console.log('game end agreed by both player');
+            this.setState({
+                end: true
+            })
+        })
+
+        socket.on('game ended', (room)=> {
+            console.log('game ended');
             this.setState({
                 end: true
             })
@@ -130,6 +149,8 @@ class Game extends React.Component {
         })
     }
 
+    getNextPlayer = () => {}
+
     /**
      * used when mouse clicked on board, used by Board's onVertexMouseUp
      * @param {*} evt mouse event
@@ -137,16 +158,14 @@ class Game extends React.Component {
      * @param {*} y coord pair
      */
     mouseClick = (evt, [x, y]) => {
-        let sign = this.state.currPlayer;
+        let sign = this.state.currColor;
         if (!this.state.locked && !this.state.end) {
             try {
-                let newBoard = this.state.board.makeMove(sign, [x, y], { preventOverwrite: true })
+                // let newBoard = this.state.board.makeMove(sign, [x, y], { preventOverwrite: true })
                 this.setState({
-                    board: newBoard,
-                    currPlayer: this.state.currPlayer * -1,
                     locked: true
                 })
-                socket.emit('move', { sign: sign, x: x, y: y })
+                socket.emit('move', { room_id: this.state.room_id, sign: sign, vertex: [x,y]})
                 console.log('sent move to server');
             } catch (e) {
                 console.error(e);
@@ -163,7 +182,7 @@ class Game extends React.Component {
         let newMap = startMap(defaultSize)
         this.setState({
             board: new Board(newMap),
-            currPlayer: 1,
+            currColor: 1,
             locked: false,
             end: false
         })
@@ -171,7 +190,7 @@ class Game extends React.Component {
 
     pass = () => {
         this.setState({
-            currPlayer: this.state.currPlayer * -1,
+            currColor: this.state.currColor * -1,
             locked: true
         })
         socket.emit('pass');
@@ -201,7 +220,7 @@ class Game extends React.Component {
      * player color toString
      */
     getPlayer = () => {
-        return (signToColor(this.state.currPlayer));
+        return (signToColor(this.state.currColor));
     }
 
     /**
@@ -219,8 +238,6 @@ class Game extends React.Component {
             animated,
             player1,
             player2,
-            sign1,
-            sign2
         } = this.state
         return (
             <Row>
@@ -235,17 +252,17 @@ class Game extends React.Component {
                 <Col span={12}>
                     <Row>
                         <Col>
-                            <Card title={player1} style={{ width: 300 }}>
+                            <Card title={player1.username} style={{ width: 300 }}>
                                 <p>Rank: </p>
                                 <p>Remaining Time: 10:00</p>
-                                <p>Playing {signToColor(sign1)}</p>
+                                <p>Playing {player1.color}</p>
                             </Card>
                         </Col>
                         <Col>
-                            <Card title={player2} style={{ width: 300 }}>
+                            <Card title={player2.username} style={{ width: 300 }}>
                                 <p>Rank: </p>
                                 <p>Remaining Time: 10:00</p>
-                                <p>Playing {signToColor(sign2)}</p>
+                                <p>Playing {player2.color}</p>
                             </Card>
                         </Col>
                     </Row>
