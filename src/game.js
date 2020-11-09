@@ -45,6 +45,7 @@ class Game extends React.Component {
             board: new Board(startMap(defaultSize)),
             currColor: 1,
             locked: true,
+            end: false,
             boardSize: defaultSize,
             showCoordinates: true,
             animated: false,
@@ -309,7 +310,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, answer : true});
+        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : true});
     }
 
     gameEndHandleCancel = component => {
@@ -317,7 +318,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, answer : false})
+        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : false})
     }
 
     isPlayerTurn = (player) => {
@@ -339,7 +340,7 @@ class Game extends React.Component {
             player1,
             player2,
             myname,
-            mycolor,
+            end,
             score1,
             score2,
             scoreDiff
@@ -493,19 +494,19 @@ class Game extends React.Component {
                         <Row>
                             <Col>
                                 <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass} okText="Yes" cancelText="No">
-                                    <Button disabled={locked}>Pass</Button>
+                                    <Button disabled={locked || end}>Pass</Button>
                                 </Popconfirm>
                             </Col>
                             <Col>
-                                <Button onClick={this.regret}>Regret</Button>
+                                <Button onClick={this.regret} disabled={end}>Regret</Button>
                             </Col>
                             <Col>
                                 <Popconfirm placement="top" title='Are you sure to resign?' onConfirm={this.resign} okText="Yes" cancelText="No">
-                                    <Button>Resign</Button>
+                                    <Button disabled={end}>Resign</Button>
                                 </Popconfirm>
                             </Col>
                             <Col>
-                                <Button onClick={this.calcScore}>Calculate Score</Button>
+                                <Button onClick={this.calcScore} disabled={end}>Calculate Score</Button>
                             </Col>
                         </Row>
                     </Col>
