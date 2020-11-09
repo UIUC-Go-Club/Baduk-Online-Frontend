@@ -1408,6 +1408,11 @@
   resolved "https://registry.yarnpkg.com/@sabaki/go-board/-/go-board-1.4.2.tgz#d18737490f800054e3b52b5ee2f5cacca88ba15e"
   integrity sha512-6k15+zGN5WneYDw0qA78Da9KCzq7oseobj3Q5a8nl/fMLRXJEYR4kq4diOu2S7BaCqiepKBxUwA91jmiVzdhyQ==
 
+"@sabaki/immutable-gametree@^1.9.3":
+  version "1.9.3"
+  resolved "https://registry.yarnpkg.com/@sabaki/immutable-gametree/-/immutable-gametree-1.9.3.tgz#4c46bb82a145097051a5b9376fc0c4d7e68e74f1"
+  integrity sha512-sSkV1+SGKJPGfHavse+e9uK0UGn98zg9KldGRsmU7Z+M+utLXeQ4MysVCfq7xAfv4/o14r8ibTROqvPi/Dy7uw==
+
 "@sabaki/sgf@^3.4.7":
   version "3.4.7"
   resolved "https://registry.yarnpkg.com/@sabaki/sgf/-/sgf-3.4.7.tgz#aacc27e788afe052c20034b971bae7014c733dd2"
