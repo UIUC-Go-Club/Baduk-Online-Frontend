@@ -5,6 +5,7 @@ import { Layout, Menu } from 'antd';
 import {
     DesktopOutlined,
     UserOutlined,
+    HomeOutlined
 } from '@ant-design/icons';
 import {
     BrowserRouter as Router,
@@ -26,6 +27,7 @@ class App extends React.Component {
         this.state = {
             collapsed: false,
             username: '',
+            room_id: ''
         }
     }
 
@@ -33,9 +35,9 @@ class App extends React.Component {
 
     }
 
-    formSubmit = (username) => {
+    formSubmit = (username, room_id) => {
         console.log(username);
-        this.setState({ username });
+        this.setState({ username, room_id });
     }
 
     onCollapse = collapsed => {
@@ -52,7 +54,12 @@ class App extends React.Component {
                     <Sider collapsible collapsed={collapsed} onCollapse={this.onCollapse}>
                         <div className="logo" />
                         <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
-                            <Menu.Item key="Home" icon={<DesktopOutlined />}>
+                            <Menu.Item key="Home" icon={<HomeOutlined />}>
+                                <Link to=''>
+                                    Home
+                                </Link>
+                            </Menu.Item>
+                            <Menu.Item key="Game" icon={<DesktopOutlined />}>
                                 <Link to='game'>
                                     Game
                                 </Link>
@@ -66,7 +73,6 @@ class App extends React.Component {
                     </Sider>
                     <Layout className="site-layout">
                         <Header className="site-layout-background" style={{ padding: 0 }}>
-                            <h1>Player: {this.state.username}</h1>
                         </Header>
                         <Content>
                             <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
@@ -78,7 +84,7 @@ class App extends React.Component {
                                         <Game />
                                     </Route>
                                     <Route path="/profile">
-                                        <Profile />
+                                        <Profile username={this.state.username}/>
                                     </Route>
                                 </Switch>
                             </div>

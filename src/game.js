@@ -3,9 +3,11 @@ import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
-import { Button, Switch, Row, Col, Card } from 'antd';
+import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { socket } from "./api";
+
+const { Countdown } = Statistic;
 
 const defaultSize = 19
 
@@ -46,14 +48,17 @@ class Game extends React.Component {
             showCoordinates: true,
             animated: false,
             realisticPlacement: false,
-            room_id: -1,
-            player1: {username: 'player1'},
-            player2: {username: 'player2'},
+            room_id: '',
+            player1: { username: 'player1' },
+            player2: { username: 'player2' },
             myname: '',
             mycolor: ''
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
+    
+    totalTime1;
+    totalTime2;
 
     componentDidMount() {
         this.configureSocket();
@@ -89,21 +94,23 @@ class Game extends React.Component {
         })
         socket.on('info', (data) => {
             const { username } = data;
-            this.setState({myname : username});
+            this.setState({ myname: username });
         })
         socket.on('game start', (data) => {
             const room = JSON.parse(data);
-            let {room_id, players} = room;
+            let { room_id, players } = room;
             // this.setState({room: room});
             this.setState({
-                room_id : room_id,
+                room_id: room_id,
                 player1: players[0],
                 player2: players[1],
             })
+            this.totalTime1 = Date.now() + 1000 * players[0].initial_time;
+            this.totalTime2 = Date.now() + 1000 * players[1].initial_time;
             if (this.state.myname === this.state.player1.username) {
-                this.setState({mycolor: this.state.player1.color})
+                this.setState({ mycolor: this.state.player1.color })
             } else {
-                this.setState({mycolor: this.state.player2.color})
+                this.setState({ mycolor: this.state.player2.color })
             }
             if (this.state.mycolor === 'black') {
                 this.setState({
@@ -128,7 +135,7 @@ class Game extends React.Component {
             })
         })
 
-        socket.on('game ended', (room)=> {
+        socket.on('game ended', (room) => {
             console.log('game ended');
             this.setState({
                 end: true
@@ -147,9 +154,13 @@ class Game extends React.Component {
                 end: true
             })
         })
+
+        socket.on('debug', (debug_message) => {
+            message.error(debug_message);
+        })
     }
 
-    getNextPlayer = () => {}
+    getNextPlayer = () => { }
 
     /**
      * used when mouse clicked on board, used by Board's onVertexMouseUp
@@ -165,7 +176,7 @@ class Game extends React.Component {
                 this.setState({
                     locked: true
                 })
-                socket.emit('move', { room_id: this.state.room_id, sign: sign, vertex: [x,y]})
+                socket.emit('move', { room_id: this.state.room_id, sign: sign, vertex: [x, y] })
                 console.log('sent move to server');
             } catch (e) {
                 console.error(e);
@@ -192,8 +203,9 @@ class Game extends React.Component {
         this.setState({
             locked: true
         })
-        socket.emit('move', { room_id: this.state.room_id, sign: 0, vertex: [-1,-1]})
+        socket.emit('move', { room_id: this.state.room_id, sign: 0, vertex: [-1, -1] })
         console.log(`you passed`);
+        message.info('You passed');
     }
 
     resign = () => {
@@ -201,6 +213,7 @@ class Game extends React.Component {
             end: true
         })
         socket.emit('resign');
+        message.warn('You choose to resign');
         console.log(`you resigned`);
     }
 
@@ -229,6 +242,10 @@ class Game extends React.Component {
         return (this.state.locked)
     }
 
+    restartTimer = (startTime) => {
+        return (Date.now() + 1000 * startTime)
+    }
+
     render() {
         let {
             board,
@@ -239,68 +256,74 @@ class Game extends React.Component {
             player2,
         } = this.state
         return (
-            <Row>
-                <Col span={12}>
-                    <Goban vertexSize={30}
-                        signMap={board.signMap}
-                        showCoordinates={showCoordinates}
-                        fuzzyStonePlacement={realisticPlacement}
-                        animateStonePlacement={animated}
-                        onVertexMouseUp={this.mouseClick} />
-                </Col>
-                <Col span={12}>
-                    <Row>
-                        <Col>
-                            <Card title={player1.username} style={{ width: 300 }}>
-                                <p>Rank: </p>
-                                <p>Remaining Time: 10:00</p>
-                                <p>Playing {player1.color}</p>
-                            </Card>
-                        </Col>
-                        <Col>
-                            <Card title={player2.username} style={{ width: 300 }}>
-                                <p>Rank: </p>
-                                <p>Remaining Time: 10:00</p>
-                                <p>Playing {player2.color}</p>
-                            </Card>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <this.toggleSwitch stateKey={'showCoordinates'} text={'show coordinates'} checked={true}></this.toggleSwitch>
-                    </Row>
-                    <Row>
-                        <this.toggleSwitch stateKey={'realisticPlacement'} text={'realistic stone placement'} checked={false}></this.toggleSwitch>
-                    </Row>
-                    <Row>
-                        <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
-                    </Row>
-                    <Row>
-                        Current Player is {this.getPlayer()}
-                    </Row>
-                    <Row>
-                        Board is {this.getLocked()}
-                    </Row>
-                    <Row>
-                        <Col>
-                        <Button onClick={this.pass}>Pass</Button>
-                        </Col>
-                        <Col>
-                        <Button onClick={this.regret}>Regret</Button>
-                        </Col>
-                        <Col>
-                        <Button onClick={this.resign}>Resign</Button>
-                        </Col>
-                        <Col>
-                        <Button onClick={this.countTerr}>Count Territories</Button>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Button onClick={this.resetBoard}>Debug.reset</Button>
-                    </Row>
-                </Col>
-
-            </Row>
-
+            <div>
+                <Row>
+                    <Col span={12}>
+                        <Goban vertexSize={30}
+                            signMap={board.signMap}
+                            showCoordinates={showCoordinates}
+                            fuzzyStonePlacement={realisticPlacement}
+                            animateStonePlacement={animated}
+                            onVertexMouseUp={this.mouseClick} />
+                    </Col>
+                    <Col span={12}>
+                        <Row>
+                            <Col>
+                                <Card title={player1.username} style={{ width: 300 }}>
+                                    <p>Rank: </p>
+                                    <Countdown title="Total remaining time:" value={this.totalTime1} onFinish={this.resign}/>
+                                    <Countdown title="Countdown:" value={Date.now() + 1000 * player1.countdown} onFinish={this.pass} />
+                                    <p>Playing {player1.color}</p>
+                                </Card>
+                            </Col>
+                            <Col>
+                                <Card title={player2.username} style={{ width: 300 }}>
+                                    <p>Rank: </p>
+                                    <Countdown title="Total remaining time:" value={this.totalTime2} onFinish={this.resign}/>
+                                    <Countdown title="Countdown:" value={Date.now() + 1000 * player2.countdown} onFinish={this.pass} />
+                                    <p>Playing {player2.color}</p>
+                                </Card>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <this.toggleSwitch stateKey={'showCoordinates'} text={'show coordinates'} checked={true}></this.toggleSwitch>
+                        </Row>
+                        <Row>
+                            <this.toggleSwitch stateKey={'realisticPlacement'} text={'realistic stone placement'} checked={false}></this.toggleSwitch>
+                        </Row>
+                        <Row>
+                            <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
+                        </Row>
+                        <Row>
+                            Current Player is {this.getPlayer()}
+                        </Row>
+                        <Row>
+                            Board is {this.getLocked()}
+                        </Row>
+                        <Row>
+                            <Col>
+                                <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass} okText="Yes" cancelText="No">
+                                    <Button>Pass</Button>
+                                </Popconfirm>
+                            </Col>
+                            <Col>
+                                <Button onClick={this.regret}>Regret</Button>
+                            </Col>
+                            <Col>
+                                <Popconfirm placement="top" title='Are you sure to resign?' onConfirm={this.resign} okText="Yes" cancelText="No">
+                                    <Button>Resign</Button>
+                                </Popconfirm>
+                            </Col>
+                            <Col>
+                                <Button onClick={this.countTerr}>Count Territories</Button>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Button onClick={this.resetBoard}>Debug.reset</Button>
+                        </Row>
+                    </Col>
+                </Row>
+            </div>
         )
     }
 }
