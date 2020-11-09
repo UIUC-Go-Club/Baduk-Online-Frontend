@@ -309,7 +309,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : true});
+        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, answer : true});
     }
 
     gameEndHandleCancel = component => {
@@ -317,7 +317,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : false})
+        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, answer : false})
     }
 
     isPlayerTurn = (player) => {
