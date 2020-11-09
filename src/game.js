@@ -3,7 +3,7 @@ import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
-import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge } from 'antd';
+import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { socket } from "./api";
 
@@ -41,6 +41,7 @@ class Game extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            gameStart: false,
             board: new Board(startMap(defaultSize)),
             currColor: 1,
             locked: true,
@@ -107,6 +108,7 @@ class Game extends React.Component {
             let { room_id, players } = room;
             // this.setState({room: room});
             this.setState({
+                gameStart: true,
                 room_id: room_id,
                 player1: players[0],
                 player2: players[1],
@@ -286,6 +288,7 @@ class Game extends React.Component {
 
     render() {
         let {
+            gameStart,
             board,
             showCoordinates,
             realisticPlacement,
@@ -293,7 +296,54 @@ class Game extends React.Component {
             player1,
             player2,
             myname,
-        } = this.state
+        } = this.state;
+        if (!gameStart) {
+            return (
+                <div>
+                    {/* <Skeleton active /> */}
+                    <Row>
+                        <Col flex='650px'>
+                            <Goban vertexSize={30}
+                                signMap={board.signMap}
+                                showCoordinates={showCoordinates}
+                                fuzzyStonePlacement={realisticPlacement}
+                                animateStonePlacement={animated}
+                                onVertexMouseUp={this.mouseClick} />
+                        </Col>
+                        <Col flex='100px'></Col>
+                        <Col flex='auto'>
+                            <Row>
+                                <Col>
+                                    <Card title=' ' style={{ width: 300 }} loading>
+                                    </Card>
+                                </Col>
+                                <Col>
+                                    <Card title=' ' style={{ width: 300 }} loading>
+                                    </Card>
+                                </Col>
+                            </Row>
+                            <Skeleton />
+                            <Row>
+                                <Col>
+                                    <Skeleton.Button />
+                                </Col>
+                                <Col>
+                                <Skeleton.Button />
+                                </Col>
+                                <Col>
+                                <Skeleton.Button />
+                                </Col>
+                                <Col>
+                                <Skeleton.Button />
+                                </Col>
+                            </Row>
+                        </Col>
+                    </Row>
+                </div>
+
+            )
+        }
+
         return (
             <div>
                 <Modal
@@ -345,7 +395,7 @@ class Game extends React.Component {
                     <p>Your opponent would like to end the game with current board, will you accept?</p>
                 </Modal>
                 <Row>
-                    <Col span={12}>
+                    <Col flex='650px'>
                         <Goban vertexSize={30}
                             signMap={board.signMap}
                             showCoordinates={showCoordinates}
@@ -353,13 +403,14 @@ class Game extends React.Component {
                             animateStonePlacement={animated}
                             onVertexMouseUp={this.mouseClick} />
                     </Col>
-                    <Col span={12}>
+                    <Col flex='100px'></Col>
+                    <Col flex='auto'>
                         <Row>
                             <Col>
-                                <Card title={player1.username} style={{ width: 300}} 
-                                headStyle={player1.username === myname ? {backgroundColor: "darkgrey"} : {backgroundColor: "white"}}
-                                bodyStyle={player1.username === myname ? {backgroundColor: "aliceblue"} : {backgroundColor: "white"}}>
-                                    
+                                <Card title={player1.username} style={{ width: 300 }}
+                                    headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
+                                    bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
+
                                     <Statistic title='Rank' value='1d'></Statistic>
                                     <Countdown title="Total remaining time:" value={this.totalTime1} onFinish={this.resign} />
                                     <Countdown title="Countdown:" value={Date.now() + 1000 * player1.countdown} onFinish={this.pass} />
@@ -369,16 +420,16 @@ class Game extends React.Component {
                                 </Card>
                             </Col>
                             <Col>
-                                <Card title={player2.username} style={{ width: 300 }} 
-                                headStyle={player2.username === myname ? {backgroundColor: "darkgrey"} : {backgroundColor: "white"}}
-                                bodyStyle={player2.username === myname ? {backgroundColor: "aliceblue"} : {backgroundColor: "white"}}>
+                                <Card title={player2.username} style={{ width: 300 }}
+                                    headStyle={player2.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
+                                    bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
                                     <Countdown title="Total remaining time:" value={this.totalTime2} onFinish={this.resign} />
                                     <Countdown title="Countdown:" value={Date.now() + 1000 * player2.countdown} onFinish={this.pass} />
                                     <Badge dot={this.isPlayerTurn(1)}>
                                         <Statistic title='Playing' value={player2.color}></Statistic>
                                     </Badge>
-                                    
+
                                 </Card>
                             </Col>
                         </Row>
