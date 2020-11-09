@@ -86,7 +86,7 @@ class Game extends React.Component {
         socket.on('move', (data) => {
             const map = JSON.parse(data);
             console.log(`received move`);
-            if (map === this.state.board.signMap) {
+            if (data === JSON.stringify(this.state.board.signMap)) {
                 message.info('Your opponent choose to pass')
             }
             let newBoard = new Board(map)
