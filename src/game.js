@@ -54,6 +54,7 @@ class Game extends React.Component {
             player2: { username: 'player2', color: 'black' },
             myname: '',
             mycolor: '',
+            winner: '',
             terrCountModalVisible: false,
             regretModalVisible: false,
             gameEndModalVisible: false,
@@ -143,11 +144,18 @@ class Game extends React.Component {
             })
         })
 
-        socket.on('game ended', (room) => {
+        socket.on('game ended', (data) => {
+            const room = JSON.parse(data);
             console.log('game ended');
             this.setState({
-                end: true
+                end: true,
+                winner: room.winner
             })
+            if (room.winner === this.state.myname) {
+                message.success('You Won!');
+            } else {
+                message.error('You Lost');
+            }
         })
 
         socket.on('terr count', () => {
