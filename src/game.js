@@ -3,7 +3,7 @@ import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
-import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic } from 'antd';
+import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { socket } from "./api";
 
@@ -49,14 +49,17 @@ class Game extends React.Component {
             animated: false,
             realisticPlacement: false,
             room_id: '',
-            player1: { username: 'player1' },
-            player2: { username: 'player2' },
+            player1: { username: 'player1', color: 'white' },
+            player2: { username: 'player2', color: 'black' },
             myname: '',
-            mycolor: ''
+            mycolor: '',
+            terrCountModalVisible: false,
+            regretModalVisible: false,
+            gameEndModalVisible: false,
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
-    
+
     totalTime1;
     totalTime2;
 
@@ -81,6 +84,9 @@ class Game extends React.Component {
         socket.on('move', (data) => {
             const map = JSON.parse(data);
             console.log(`received move`);
+            if (map === this.state.board.signMap) {
+                message.info('Your opponent choose to pass')
+            }
             let newBoard = new Board(map)
             this.setState({
                 board: newBoard,
@@ -246,6 +252,38 @@ class Game extends React.Component {
         return (Date.now() + 1000 * startTime)
     }
 
+    handleCancel = component => {
+        console.log(component);
+        this.setState({
+            terrCountModalVisible: false,
+            regretModalVisible: false,
+            gameEndModalVisible: false,
+        });
+    };
+
+    regretHandleOk = component => {
+        console.log(component);
+        socket.emit('regret accept');
+    }
+
+    countHandleOk = component => {
+        console.log(component);
+        socket.emit('count accept');
+    }
+
+    gameEndHandleOk = component => {
+        console.log(component);
+        socket.emit('game end accept');
+    }
+
+    isPlayerTurn = (player) => {
+        if (player === 0) {
+            return (signToColor(this.state.currColor)) === this.state.player1.color;
+        } else {
+            return (signToColor(this.state.currColor)) === this.state.player2.color;
+        }
+    }
+
     render() {
         let {
             board,
@@ -257,6 +295,54 @@ class Game extends React.Component {
         } = this.state
         return (
             <div>
+                <Modal
+                    title="Regret Request"
+                    visible={this.state.regretModalVisible}
+                    onOk={this.regretHandleOk}
+                    onCancel={this.handleCancel}
+                    footer={[
+                        <Button key="Refuse" onClick={this.handleCancel}>
+                            Refuse
+                    </Button>,
+                        <Button key="Accept" type="primary" onClick={this.regretHandleOk}>
+                            Accept
+                    </Button>,
+                    ]}
+                >
+                    <p>Your opponent would like to regret the last move, will you accept?</p>
+                </Modal>
+                <Modal
+                    title="Terrortory Count Request"
+                    visible={this.state.terrCountModalVisible}
+                    onOk={this.countHandleOk}
+                    onCancel={this.handleCancel}
+                    footer={[
+                        <Button key="Refuse" onClick={this.handleCancel}>
+                            Refuse
+                    </Button>,
+                        <Button key="Accept" type="primary" onClick={this.countHandleOk}>
+                            Accept
+                    </Button>,
+                    ]}
+                >
+                    <p>Your opponent would like to count the current terrortory on the board, will you accept?</p>
+                </Modal>
+                <Modal
+                    title="Game End Request"
+                    visible={this.state.gameEndModalVisible}
+                    onOk={this.gameEndHandleOk}
+                    onCancel={this.handleCancel}
+                    footer={[
+                        <Button key="Refuse" onClick={this.handleCancel}>
+                            Refuse
+                    </Button>,
+                        <Button key="Accept" type="primary" onClick={this.gameEndHandleOk}>
+                            Accept
+                    </Button>,
+                    ]}
+                >
+                    <p>Your opponent would like to end the game with current board, will you accept?</p>
+                </Modal>
                 <Row>
                     <Col span={12}>
                         <Goban vertexSize={30}
@@ -270,18 +356,24 @@ class Game extends React.Component {
                         <Row>
                             <Col>
                                 <Card title={player1.username} style={{ width: 300 }}>
-                                    <p>Rank: </p>
-                                    <Countdown title="Total remaining time:" value={this.totalTime1} onFinish={this.resign}/>
+                                    
+                                    <Statistic title='Rank' value='1d'></Statistic>
+                                    <Countdown title="Total remaining time:" value={this.totalTime1} onFinish={this.resign} />
                                     <Countdown title="Countdown:" value={Date.now() + 1000 * player1.countdown} onFinish={this.pass} />
-                                    <p>Playing {player1.color}</p>
+                                    <Badge dot={this.isPlayerTurn(0)}>
+                                        <Statistic title='Playing' value={player1.color}></Statistic>
+                                    </Badge>
                                 </Card>
                             </Col>
                             <Col>
                                 <Card title={player2.username} style={{ width: 300 }}>
-                                    <p>Rank: </p>
-                                    <Countdown title="Total remaining time:" value={this.totalTime2} onFinish={this.resign}/>
+                                    <Statistic title='Rank' value='1d'></Statistic>
+                                    <Countdown title="Total remaining time:" value={this.totalTime2} onFinish={this.resign} />
                                     <Countdown title="Countdown:" value={Date.now() + 1000 * player2.countdown} onFinish={this.pass} />
-                                    <p>Playing {player2.color}</p>
+                                    <Badge dot={this.isPlayerTurn(1)}>
+                                        <Statistic title='Playing' value={player2.color}></Statistic>
+                                    </Badge>
+                                    
                                 </Card>
                             </Col>
                         </Row>
@@ -293,12 +385,6 @@ class Game extends React.Component {
                         </Row>
                         <Row>
                             <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
-                        </Row>
-                        <Row>
-                            Current Player is {this.getPlayer()}
-                        </Row>
-                        <Row>
-                            Board is {this.getLocked()}
                         </Row>
                         <Row>
                             <Col>
@@ -317,9 +403,6 @@ class Game extends React.Component {
                             <Col>
                                 <Button onClick={this.countTerr}>Count Territories</Button>
                             </Col>
-                        </Row>
-                        <Row>
-                            <Button onClick={this.resetBoard}>Debug.reset</Button>
                         </Row>
                     </Col>
                 </Row>

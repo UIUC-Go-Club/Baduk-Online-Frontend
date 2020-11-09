@@ -1,6 +1,6 @@
 import React from 'react'
 import { socket } from "./api";
-import { Button, Empty, Descriptions, Badge, Collapse, List, Divider } from 'antd';
+import { Button, Empty, Descriptions, Collapse, List, Divider } from 'antd';
 import { Link } from 'react-router-dom';
 
 const { Panel } = Collapse;
@@ -58,10 +58,6 @@ class Profile extends React.Component {
                     <Descriptions.Item label="Username">{this.state.name}</Descriptions.Item>
                     <Descriptions.Item label="Email">{this.state.email}</Descriptions.Item>
                     <Descriptions.Item label="MatchCount">Total matches placeholder</Descriptions.Item>
-                    <Descriptions.Item label="Status" span={3}>
-
-                        <Badge status="processing" text="" />
-                    </Descriptions.Item>
                 </Descriptions>
                 <Divider orientation="left">Matches</Divider>
                 <Collapse defaultActiveKey={['1']}>
