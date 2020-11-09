@@ -131,7 +131,7 @@ class Game extends React.Component {
             }
         })
 
-        socket.on('game end request', () => {
+        socket.on('game end init', () => {
             // TODO implement game end 
             this.setState({
                 gameEndModalVisible: true
@@ -459,7 +459,6 @@ class Game extends React.Component {
                                 <Card title={player1.username} style={{ width: 300 }}
                                     headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
-
                                     <Statistic title='Rank' value='1d'></Statistic>
                                     <Countdown title="Total remaining time:" value={this.totalTime1} onFinish={this.resign} />
                                     <Countdown title="Countdown:" value={Date.now() + 1000 * player1.countdown} onFinish={this.pass} />
