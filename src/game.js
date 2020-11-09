@@ -220,7 +220,7 @@ class Game extends React.Component {
         this.setState({
             end: true
         })
-        socket.emit('resign');
+        socket.emit('resign', {room_id : this.state.room_id});
         message.warn('You choose to resign');
         console.log(`you resigned`);
     }
@@ -229,11 +229,11 @@ class Game extends React.Component {
         this.setState({
             locked: true
         })
-        socket.emit('terr count');
+        socket.emit('terr count', {room_id : this.state.room_id});
     }
 
     regret = () => {
-        socket.emit('regret');
+        socket.emit('regret', {room_id : this.state.room_id});
     }
 
     /**
@@ -265,17 +265,17 @@ class Game extends React.Component {
 
     regretHandleOk = component => {
         console.log(component);
-        socket.emit('regret accept');
+        socket.emit('regret accept', {room_id : this.state.room_id});
     }
 
     countHandleOk = component => {
         console.log(component);
-        socket.emit('count accept');
+        socket.emit('count accept', {room_id : this.state.room_id});
     }
 
     gameEndHandleOk = component => {
         console.log(component);
-        socket.emit('game end accept');
+        socket.emit('game end accept', {room_id : this.state.room_id});
     }
 
     isPlayerTurn = (player) => {
