@@ -292,6 +292,7 @@ class Game extends React.Component {
             animated,
             player1,
             player2,
+            myname,
         } = this.state
         return (
             <div>
@@ -355,7 +356,9 @@ class Game extends React.Component {
                     <Col span={12}>
                         <Row>
                             <Col>
-                                <Card title={player1.username} style={{ width: 300 }}>
+                                <Card title={player1.username} style={{ width: 300}} 
+                                headStyle={player1.username === myname ? {backgroundColor: "darkgrey"} : {backgroundColor: "white"}}
+                                bodyStyle={player1.username === myname ? {backgroundColor: "aliceblue"} : {backgroundColor: "white"}}>
                                     
                                     <Statistic title='Rank' value='1d'></Statistic>
                                     <Countdown title="Total remaining time:" value={this.totalTime1} onFinish={this.resign} />
@@ -366,7 +369,9 @@ class Game extends React.Component {
                                 </Card>
                             </Col>
                             <Col>
-                                <Card title={player2.username} style={{ width: 300 }}>
+                                <Card title={player2.username} style={{ width: 300 }} 
+                                headStyle={player2.username === myname ? {backgroundColor: "darkgrey"} : {backgroundColor: "white"}}
+                                bodyStyle={player2.username === myname ? {backgroundColor: "aliceblue"} : {backgroundColor: "white"}}>
                                     <Statistic title='Rank' value='1d'></Statistic>
                                     <Countdown title="Total remaining time:" value={this.totalTime2} onFinish={this.resign} />
                                     <Countdown title="Countdown:" value={Date.now() + 1000 * player2.countdown} onFinish={this.pass} />
