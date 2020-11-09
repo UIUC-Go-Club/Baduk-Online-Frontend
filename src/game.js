@@ -54,8 +54,11 @@ class Game extends React.Component {
             player2: { username: 'player2', color: 'black' },
             myname: '',
             mycolor: '',
+            score1: 0,
+            score2: 0,
+            scoreDiff: 0,
             winner: '',
-            terrCountModalVisible: false,
+            scoreModalVisible: false,
             regretModalVisible: false,
             gameEndModalVisible: false,
         }
@@ -128,15 +131,14 @@ class Game extends React.Component {
             }
         })
 
-        socket.on('game end', () => {
+        socket.on('game end request', () => {
             // TODO implement game end 
-            console.log('game end agreed by both player');
             this.setState({
-                end: true
+                gameEndModalVisible: true
             })
         })
 
-        socket.on('game ended', (data) => {
+        socket.on('game end result', (data) => {
             const room = JSON.parse(data);
             console.log('game ended');
             this.setState({
@@ -150,9 +152,27 @@ class Game extends React.Component {
             }
         })
 
-        socket.on('terr count', () => {
+        socket.on('calc score', (data) => {
             // TODO implement terr count 
-            console.log('opponent propose to count territories');
+            const scoreResult = JSON.parse(data);
+            console.log('calc score' + scoreResult);
+            const {player1} = this.state;
+            if (player1.color === 'black') {
+                this.setState({
+                    score1: scoreResult.territory[0],
+                    score2: scoreResult.territory[1],
+                    scoreDiff: scoreResult.territoryScore
+                })
+            } else {
+                this.setState({
+                    score1: scoreResult.territory[1],
+                    score2: scoreResult.territory[0],
+                    scoreDiff: scoreResult.territoryScore
+                })
+            }
+            this.setState({
+                scoreModalVisible: true
+            })
         })
 
         socket.on('resign', () => {
@@ -225,11 +245,11 @@ class Game extends React.Component {
         console.log(`you resigned`);
     }
 
-    countTerr = () => {
+    calcScore = () => {
         this.setState({
             locked: true
         })
-        socket.emit('terr count', {room_id : this.state.room_id});
+        socket.emit('calc score', {room_id : this.state.room_id});
     }
 
     regret = () => {
@@ -254,28 +274,50 @@ class Game extends React.Component {
         return (Date.now() + 1000 * startTime)
     }
 
-    handleCancel = component => {
+    regretHandleCancel = component => {
         console.log(component);
         this.setState({
-            terrCountModalVisible: false,
             regretModalVisible: false,
-            gameEndModalVisible: false,
         });
     };
 
     regretHandleOk = component => {
         console.log(component);
         socket.emit('regret accept', {room_id : this.state.room_id});
+        this.setState({
+            regretModalVisible: false
+        });
     }
 
     countHandleOk = component => {
         console.log(component);
-        socket.emit('count accept', {room_id : this.state.room_id});
+        this.setState({
+            scoreModalVisible: false
+        })
+        socket.emit('game end init', {room_id : this.state.room_id, username: this.state.myname});
+    }
+
+    countHandleCancel = component => {
+        console.log(component);
+        this.setState({
+            scoreModalVisible: false
+        })
     }
 
     gameEndHandleOk = component => {
         console.log(component);
-        socket.emit('game end accept', {room_id : this.state.room_id});
+        this.setState({
+            gameEndModalVisible: false
+        })
+        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : true});
+    }
+
+    gameEndHandleCancel = component => {
+        console.log(component);
+        this.setState({
+            gameEndModalVisible: false
+        })
+        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : false})
     }
 
     isPlayerTurn = (player) => {
@@ -297,6 +339,10 @@ class Game extends React.Component {
             player1,
             player2,
             myname,
+            mycolor,
+            score1,
+            score2,
+            scoreDiff
         } = this.state;
         if (!gameStart) {
             return (
@@ -351,9 +397,9 @@ class Game extends React.Component {
                     title="Regret Request"
                     visible={this.state.regretModalVisible}
                     onOk={this.regretHandleOk}
-                    onCancel={this.handleCancel}
+                    onCancel={this.regretHandleCancel}
                     footer={[
-                        <Button key="Refuse" onClick={this.handleCancel}>
+                        <Button key="Refuse" onClick={this.regretHandleCancel}>
                             Refuse
                     </Button>,
                         <Button key="Accept" type="primary" onClick={this.regretHandleOk}>
@@ -364,28 +410,30 @@ class Game extends React.Component {
                     <p>Your opponent would like to regret the last move, will you accept?</p>
                 </Modal>
                 <Modal
-                    title="Terrortory Count Request"
-                    visible={this.state.terrCountModalVisible}
+                    title="Terrortory Count Result"
+                    visible={this.state.scoreModalVisible}
                     onOk={this.countHandleOk}
-                    onCancel={this.handleCancel}
+                    onCancel={this.countHandleCancel}
                     footer={[
-                        <Button key="Refuse" onClick={this.handleCancel}>
-                            Refuse
+                        <Button key="No" onClick={this.countHandleCancel}>
+                            No
                     </Button>,
-                        <Button key="Accept" type="primary" onClick={this.countHandleOk}>
-                            Accept
+                        <Button key="Yes" type="primary" onClick={this.countHandleOk}>
+                            Yes
                     </Button>,
                     ]}
                 >
-                    <p>Your opponent would like to count the current terrortory on the board, will you accept?</p>
+                    <p>Current score is {player1.username} {score1}, {player2.username} {score2}, </p> 
+                    <p> with a {scoreDiff > 0 ? 'black lead of' + scoreDiff + 'points': 'white lead of ' + -1*scoreDiff + 'points'}, </p> 
+                    <p> would you like to end the game now? </p>
                 </Modal>
                 <Modal
                     title="Game End Request"
                     visible={this.state.gameEndModalVisible}
                     onOk={this.gameEndHandleOk}
-                    onCancel={this.handleCancel}
+                    onCancel={this.gameEndHandleCancel}
                     footer={[
-                        <Button key="Refuse" onClick={this.handleCancel}>
+                        <Button key="Refuse" onClick={this.gameEndHandleCancel}>
                             Refuse
                     </Button>,
                         <Button key="Accept" type="primary" onClick={this.gameEndHandleOk}>
@@ -458,7 +506,7 @@ class Game extends React.Component {
                                 </Popconfirm>
                             </Col>
                             <Col>
-                                <Button onClick={this.countTerr}>Count Territories</Button>
+                                <Button onClick={this.calcScore}>Calculate Score</Button>
                             </Col>
                         </Row>
                     </Col>
