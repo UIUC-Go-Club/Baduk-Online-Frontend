@@ -128,14 +128,6 @@ class Game extends React.Component {
             }
         })
 
-        socket.on('pass', () => {
-            console.log('opponent passed');
-            this.setState({
-                currColor: this.state.currColor * -1,
-                locked: false
-            })
-        })
-
         socket.on('game end', () => {
             // TODO implement game end 
             console.log('game end agreed by both player');
@@ -298,6 +290,7 @@ class Game extends React.Component {
         let {
             gameStart,
             board,
+            locked,
             showCoordinates,
             realisticPlacement,
             animated,
@@ -453,7 +446,7 @@ class Game extends React.Component {
                         <Row>
                             <Col>
                                 <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass} okText="Yes" cancelText="No">
-                                    <Button>Pass</Button>
+                                    <Button disabled={locked}>Pass</Button>
                                 </Popconfirm>
                             </Col>
                             <Col>
