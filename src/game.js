@@ -88,9 +88,12 @@ class Game extends React.Component {
         socket.on('connect', () => { console.log(socket.id) });
         // receive uptated board from server
         socket.on('move', (data) => {
-            const map = JSON.parse(data);
+            const room = JSON.parse(data);
+            const map = JSON.parse(room.currentBoardSignedMap);
             console.log(`received move`);
-            if (data === JSON.stringify(this.state.board.signMap) && signToColor(this.state.currColor) !== this.state.mycolor) {
+            console.log(room.currentBoardSignedMap)
+            console.log(map)
+            if (room.currentBoardSignedMap === JSON.stringify(this.state.board.signMap) && signToColor(this.state.currColor) !== this.state.mycolor) {
                 message.info('Your opponent choose to pass')
             } else {
                 let newBoard = new Board(map)
@@ -294,7 +297,7 @@ class Game extends React.Component {
     }
 
     regret = () => {
-        socket.emit('regret', {room_id : this.state.room_id, username: this.state.myname});
+        socket.emit('regret init', {room_id : this.state.room_id, username: this.state.myname});
     }
 
     /**
