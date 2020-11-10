@@ -532,7 +532,6 @@ class Game extends React.Component {
                                     bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
                                     <Countdown title="Total remaining time:" value={this.totalTime1} onFinish={this.resign} />
-                                    <Countdown title="Countdown:" value={Date.now() + 1000 * player1.countdown} onFinish={this.pass} />
                                     <Badge dot={this.isPlayerTurn(0)}>
                                         <Statistic title='Playing' value={player1.color}></Statistic>
                                     </Badge>
@@ -544,11 +543,9 @@ class Game extends React.Component {
                                     bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
                                     <Countdown title="Total remaining time:" value={this.totalTime2} onFinish={this.resign} />
-                                    <Countdown title="Countdown:" value={Date.now() + 1000 * player2.countdown} onFinish={this.pass} />
                                     <Badge dot={this.isPlayerTurn(1)}>
                                         <Statistic title='Playing' value={player2.color}></Statistic>
                                     </Badge>
-
                                 </Card>
                             </Col>
                         </Row>
