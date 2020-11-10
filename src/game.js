@@ -151,7 +151,25 @@ class Game extends React.Component {
                 end: true,
                 winner: room.winner
             })
-            if (room.winner === this.state.myname) {
+            const {player1, player2, myname} = this.state;
+            if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
+                message.success('You Won!');
+            } else {
+                message.error('You Lost');
+            }
+        })
+
+        /**
+         * handle opponent resigned
+         */
+        socket.on('game ended', (data) => {
+            const room = JSON.parse(data);
+            this.setState({
+                end: true,
+                winner: room.winner
+            })
+            const {player1, player2, myname} = this.state;
+            if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
                 message.success('You Won!');
             } else {
                 message.error('You Lost');
