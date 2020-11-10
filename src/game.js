@@ -8,7 +8,7 @@ import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { socket } from "./api";
 
 const { Countdown } = Statistic;
-
+const moveAudio = new Audio('../data/0.mp3')
 const defaultSize = 19
 
 function startMap(size) {
@@ -90,14 +90,16 @@ class Game extends React.Component {
         socket.on('move', (data) => {
             const map = JSON.parse(data);
             console.log(`received move`);
-            if (data === JSON.stringify(this.state.board.signMap)) {
+            if (data === JSON.stringify(this.state.board.signMap) && signToColor(this.state.currColor) !== this.state.mycolor) {
                 message.info('Your opponent choose to pass')
+            } else {
+                let newBoard = new Board(map)
+                this.setState({
+                    board: newBoard
+                })
+                // moveAudio.play();
             }
-            let newBoard = new Board(map)
-            this.setState({
-                board: newBoard,
-                currColor: this.state.currColor * -1
-            })
+            this.setState({currColor: this.state.currColor * -1});
             if (signToColor(this.state.currColor) === this.state.mycolor) {
                 this.setState({
                     locked: false
@@ -184,9 +186,47 @@ class Game extends React.Component {
             })
         })
 
+        socket.on('regret init', (data) => {
+            const room = JSON.parse(data);
+            if (room.room_id === this.state.room_id) {
+                this.setState({
+                    regretModalVisible: true
+                })
+            }
+        })
+
+        socket.on('regret result', (data) => {
+            const room = JSON.parse(data);
+            if (room.room_id === this.state.room_id) {
+                if (room.currentBoardSignedMap === JSON.stringify(this.state.board.signMap)) {
+                    // no regret 
+                    message.error('opponent refused your regret request');
+                } else {
+                    if (room.currentTurn === 0) {
+                        this.setState({
+                            currColor: this.state.player1.color
+                        })
+                    } else {
+                        this.setState({
+                            currColor: this.state.player2.color
+                        })
+                    }
+                    this.setState({
+                        board: new Board(JSON.parse(room.currentBoardSignedMap)),
+                        locked: !(room.players[room.currentTurn].username === this.state.myname)
+                    })
+                    message.success('Opponent accept your regret request');
+                }
+            }
+        })
+
         socket.on('debug', (debug_message) => {
             message.error(debug_message);
         })
+    }
+
+    colorToSign = (color) => {
+        return (color === 'black' ? 1 : -1);
     }
 
     getNextPlayer = () => { }
@@ -201,7 +241,7 @@ class Game extends React.Component {
         let sign = this.state.currColor;
         if (!this.state.locked && !this.state.end) {
             try {
-                // let newBoard = this.state.board.makeMove(sign, [x, y], { preventOverwrite: true })
+                this.state.board.makeMove(sign, [x, y], { preventOverwrite: true, preventKo: true})
                 this.setState({
                     locked: true
                 })
@@ -254,14 +294,14 @@ class Game extends React.Component {
     }
 
     regret = () => {
-        socket.emit('regret', {room_id : this.state.room_id});
+        socket.emit('regret', {room_id : this.state.room_id, username: this.state.myname});
     }
 
     /**
      * player color toString
      */
     getPlayer = () => {
-        return (signToColor(this.state.currColor));
+        return (signToColor(this.state.currColor) === this.state.player1.color ? 0 : 1);
     }
 
     /**
@@ -280,14 +320,23 @@ class Game extends React.Component {
         this.setState({
             regretModalVisible: false,
         });
+        socket.emit('regret response', {
+            username: this.state.myname,
+            room_id: this.state.room_id,
+            answer: false
+        })
     };
 
     regretHandleOk = component => {
         console.log(component);
-        socket.emit('regret accept', {room_id : this.state.room_id});
         this.setState({
             regretModalVisible: false
         });
+        socket.emit('regret response', {
+            username: this.state.myname,
+            room_id: this.state.room_id,
+            answer: true
+        })
     }
 
     countHandleOk = component => {
