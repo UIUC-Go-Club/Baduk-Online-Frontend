@@ -120,7 +120,6 @@ class Game extends React.Component {
         socket.on('game start', (data) => {
             const room = JSON.parse(data);
             let { room_id, players } = room;
-            // this.setState({room: room});
             this.setState({
                 gameStart: true,
                 room_id: room_id,
@@ -139,6 +138,29 @@ class Game extends React.Component {
                     locked: false
                 })
             }
+        })
+
+        socket.on('game rejoin', (data)=> {
+            const room = JSON.parse(data);
+            let { room_id, players } = room;
+            this.setState({
+                gameStart: true,
+                room_id: room_id,
+                player1: players[0],
+                player2: players[1],
+                board: new Board(JSON.parse(room.currentBoardSignedMap)),
+                locked: !(room.players[room.currentTurn].username === this.state.myname)
+            })
+            this.totalTime1 = Date.now() + 1000 * players[0].initial_time;
+            this.totalTime2 = Date.now() + 1000 * players[1].initial_time;
+            if (this.state.myname === this.state.player1.username) {
+                this.setState({ mycolor: this.state.player1.color })
+            } else {
+                this.setState({ mycolor: this.state.player2.color })
+            }
+            this.setState({
+                currColor: colorToSign(room.players[room.currentTurn].color)
+            })
         })
 
         socket.on('game end init', () => {
@@ -325,6 +347,10 @@ class Game extends React.Component {
      */
     getPlayer = () => {
         return (signToColor(this.state.currColor) === this.state.player1.color ? 0 : 1);
+    }
+
+    getMyIndex = () => {
+        return (this.state.myname === this.state.player1.username ? 1 : 0);
     }
 
     /**
