@@ -23,6 +23,10 @@ function signToColor(sign) {
     }
 }
 
+function colorToSign(color) {
+    return (color === 'black' ? 1 : -1);
+}
+
 const createTwoWaySwitch = component => ({ stateKey, text, checked }) => {
     return (
         <label>
@@ -225,11 +229,11 @@ class Game extends React.Component {
                 } else {
                     if (room.currentTurn === 0) {
                         this.setState({
-                            currColor: this.state.player1.color
+                            currColor: colorToSign(this.state.player1.color)
                         })
                     } else {
                         this.setState({
-                            currColor: this.state.player2.color
+                            currColor: colorToSign(this.state.player2.color)
                         })
                     }
                     this.setState({
@@ -246,9 +250,7 @@ class Game extends React.Component {
         })
     }
 
-    colorToSign = (color) => {
-        return (color === 'black' ? 1 : -1);
-    }
+    
 
     getNextPlayer = () => { }
 
