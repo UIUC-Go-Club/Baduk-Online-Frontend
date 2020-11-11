@@ -3,5 +3,12 @@ module.exports = {
         alias: {
             preact: "react"
         }
+    },
+    jest: {
+        configure: {
+            moduleNameMapper: {
+                "preact": "react"
+            }
+        }
     }
 };
