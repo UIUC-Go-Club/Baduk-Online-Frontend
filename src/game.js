@@ -11,11 +11,11 @@ const { Countdown } = Statistic;
 const moveAudio = new Audio('../data/0.mp3')
 const defaultSize = 19
 
-function startMap(size) {
+export function startMap(size) {
     return new Array(size).fill(0).map(() => new Array(size).fill(0));
 }
 
-function signToColor(sign) {
+export function signToColor(sign) {
     if (sign === 1) {
         return "black";
     } else {
@@ -23,7 +23,7 @@ function signToColor(sign) {
     }
 }
 
-function colorToSign(color) {
+export function colorToSign(color) {
     return (color === 'black' ? 1 : -1);
 }
 
