@@ -332,9 +332,6 @@ class Game extends React.Component {
     }
 
     calcScore = () => {
-        this.setState({
-            locked: true
-        })
         socket.emit('calc score', {room_id : this.state.room_id});
     }
 
@@ -509,7 +506,7 @@ class Game extends React.Component {
                     <p>Your opponent would like to regret the last move, will you accept?</p>
                 </Modal>
                 <Modal
-                    title="Terrortory Count Result"
+                    title="Score Count Result"
                     visible={this.state.scoreModalVisible}
                     onOk={this.countHandleOk}
                     onCancel={this.countHandleCancel}
