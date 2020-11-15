@@ -585,7 +585,7 @@ class Game extends React.Component {
                         </Row>
                         <Row>
                             <Col>
-                                <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass} okText="Yes" cancelText="No">
+                                <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass} okText="Yes" cancelText="No" disabled={locked || end}>
                                     <Button disabled={locked || end}>Pass</Button>
                                 </Popconfirm>
                             </Col>
@@ -593,7 +593,7 @@ class Game extends React.Component {
                                 <Button onClick={this.regret} disabled={end}>Regret</Button>
                             </Col>
                             <Col>
-                                <Popconfirm placement="top" title='Are you sure to resign?' onConfirm={this.resign} okText="Yes" cancelText="No">
+                                <Popconfirm placement="top" title='Are you sure to resign?' onConfirm={this.resign} okText="Yes" cancelText="No" disabled={end}>
                                     <Button disabled={end}>Resign</Button>
                                 </Popconfirm>
                             </Col>
