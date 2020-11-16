@@ -157,6 +157,33 @@ class Game extends React.Component {
             this.setState({ myname: username });
         })
 
+        socket.on('room bystander change', (data) => {
+            console.log('room bystander change');
+            const room = JSON.parse(data);
+            let { room_id, players, gameStarted } = room;
+            this.setState({
+                room_id: room_id,
+                gameStart: gameStarted,
+            })
+            if (gameStarted) {
+                const map = JSON.parse(room.currentBoardSignedMap);
+                this.setState({
+                    board: new Board(map),
+                })
+            }
+            if (players[0]) {
+                this.setState({
+                    player1: players[0],
+                })
+            }
+            if (players[1]) {
+                this.setState({
+                    player2: players[1],
+                })
+            }
+            this.setState({ mycolor: 'undefined' })
+        })
+
         socket.on('room player change', (data) => {
             console.log('room player change');
             const room = JSON.parse(data);

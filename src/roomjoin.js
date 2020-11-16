@@ -58,6 +58,7 @@ class RoomJoin extends React.Component {
             socket.emit('join_room_player', { username: this.state.username, room_id: room_id });
         } else {
             socket.emit('join_room_bystander', { username: this.state.username, room_id: room_id })
+            console.log('bystander join');
         }
         this.props.cb(this.props.username, room_id);
         message.success(`joined room ${room_id} as ${role}`)
@@ -72,22 +73,22 @@ class RoomJoin extends React.Component {
         this.formRef.current.resetFields();
     };
 
-    // onRoleChange = value => {
-    //     switch (value) {
-    //         case 'player':
-    //             this.formRef.current.setFieldsValue({
-    //                 role: 'player',
-    //             });
-    //             return;
-    //         case 'bystander':
-    //             this.formRef.current.setFieldsValue({
-    //                 role: 'bystander',
-    //             });
-    //             return;
-    //         default:
-    //             return;
-    //     }
-    // }
+    onRoleChange = value => {
+        switch (value) {
+            case 'player':
+                this.formRef.current.setFieldsValue({
+                    role: 'player',
+                });
+                return;
+            case 'bystander':
+                this.formRef.current.setFieldsValue({
+                    role: 'bystander',
+                });
+                return;
+            default:
+                return;
+        }
+    }
 
 
     render() {
@@ -135,7 +136,7 @@ class RoomJoin extends React.Component {
                             }]
                         }>
                         <Col span={6}>
-                            <Select defaultValue="player">
+                            <Select defaultValue="player" onChange={this.onRoleChange}>
                                 <Option value="player">Player</Option>
                                 <Option value="bystander">Observer</Option>
                             </Select>
