@@ -20,15 +20,13 @@ const tailLayout = {
     },
 };
 
-class SignIn extends React.Component {
+class Signup extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             submitted: false
         }
     }
-
-    formRef = React.createRef();
 
     componentDidMount() {
     }
@@ -43,8 +41,9 @@ class SignIn extends React.Component {
         const password = values.password;
         console.log(`login with username: ${username} and password: ${password}`);
         // socket.emit('join_room_player', { username: nickname, room_id : room });
-        const endpoint = server_url + 'auth/login';
-        const loginData = {
+        const endpoint = server_url + 'auth/signup';
+        // console.log(endpoint)
+        const signupData = {
             username: username,
             password: password
         }
@@ -54,26 +53,21 @@ class SignIn extends React.Component {
                 'Content-Type': 'application/json'
             },
             redirect: 'follow',
-            body: JSON.stringify(loginData)
+            body: JSON.stringify(signupData)
         }).then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                message.success('login success');
-                this.props.cb(username, password);
-                this.setState({ submitted: true })
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                message.error('Login failed');
-            });
+        .then(data => {
+            console.log('signup success:', data);
+            message.success('signup success');
+            this.setState({ submitted: true })
+        })
+        .catch((error) => {
+            console.error('signup error:', error);
+            message.error('signup failed');
+        });
     };
 
     onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);
-    };
-
-    onReset = () => {
-        this.formRef.current.resetFields();
     };
 
 
@@ -81,7 +75,7 @@ class SignIn extends React.Component {
         const submitted = this.state.submitted;
         if (submitted) {
             return (
-                <Redirect to="/joinroom" />
+                <Redirect to="/" />
             )
         }
         return (
@@ -131,7 +125,7 @@ class SignIn extends React.Component {
                     </Form.Item>
                     <Form.Item {...tailLayout}>
                         <Button type="primary" size='large' htmlType="submit">
-                            Login
+                            Signup
                     </Button>
                     </Form.Item>
                 </Form>
@@ -140,4 +134,4 @@ class SignIn extends React.Component {
     }
 }
 
-export default SignIn;
+export default Signup;

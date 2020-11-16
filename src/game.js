@@ -20,6 +20,7 @@ const moveAudio1 = new Audio(moveSound1)
 const moveAudio2 = new Audio(moveSound2)
 const moveAudio3 = new Audio(moveSound3)
 const moveAudio4 = new Audio(moveSound4)
+const moveAudios = [moveAudio0,moveAudio1,moveAudio2,moveAudio2,moveAudio3,moveAudio4]
 const defaultSize = 19
 
 export function startMap(size) {
@@ -77,6 +78,7 @@ class Game extends React.Component {
             scoreModalVisible: false,
             regretModalVisible: false,
             gameEndModalVisible: false,
+            gameStartModalVisible: false,
             chats : []
         }
         this.toggleSwitch = createTwoWaySwitch(this);
@@ -84,6 +86,20 @@ class Game extends React.Component {
 
     totalTime1;
     totalTime2;
+    countdownApi1 = null;
+    countdownApi2 = null;
+
+    setRef1 = (countdown) => {
+        if (countdown) {
+            this.countdownApi1 = countdown.getApi();
+        }
+    };
+
+    setRef2 = (countdown) => {
+        if (countdown) {
+            this.countdownApi2 = countdown.getApi();
+        }
+    };
 
     componentDidMount() {
         this.configureSocket();
@@ -91,6 +107,11 @@ class Game extends React.Component {
 
     componentWillUnmount() {
         // this.props.history.goForward();
+    }
+
+    playMoveAudio = () => {
+        let index = Math.floor(Math.random() * 5);
+        moveAudios[index].play();
     }
 
     configureSocket = () => {
@@ -116,13 +137,20 @@ class Game extends React.Component {
                 this.setState({
                     board: newBoard
                 })
-                // moveAudio.play();
+                this.playMoveAudio();
             }
             this.setState({currColor: this.state.currColor * -1});
             if (signToColor(this.state.currColor) === this.state.mycolor) {
                 this.setState({
                     locked: false
                 })
+            }
+            if (this.isPlayerTurn(0)) {
+                this.startTimer1();
+                this.pauseTimer2();
+            } else {
+                this.startTimer2();
+                this.pauseTimer1();
             }
         })
         socket.on('info', (data) => {
@@ -150,6 +178,19 @@ class Game extends React.Component {
                     locked: false
                 })
             }
+            if (this.isPlayerTurn(0)) {
+                this.startTimer1();
+                this.pauseTimer2();
+            } else {
+                this.startTimer2();
+                this.pauseTimer1();
+            }
+        })
+
+        socket.on('game start init', ()=> {
+            this.setState({
+                gameStartModalVisible: true
+            })
         })
 
         socket.on('game rejoin', (data)=> {
@@ -313,7 +354,6 @@ class Game extends React.Component {
                 })
                 socket.emit('move', { room_id: this.state.room_id, sign: sign, vertex: [x, y] })
                 console.log('sent move to server');
-                moveAudio0.play();
             } catch (e) {
                 console.error(e);
             }
@@ -383,6 +423,10 @@ class Game extends React.Component {
         return (Date.now() + 1000 * startTime)
     }
 
+    gameStart = () => {
+        socket.emit('game start init', {username: this.state.myname, room_id: this.state.room_id});
+    }
+
     regretHandleCancel = component => {
         console.log(component);
         this.setState({
@@ -438,6 +482,22 @@ class Game extends React.Component {
         socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : false})
     }
 
+    gameStartHandleOk = component => {
+        console.log(component);
+        this.setState({
+            gameEndModalVisible: false
+        })
+        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, answer : true});
+    }
+
+    gameStartHandleCancel = component => {
+        console.log(component);
+        this.setState({
+            gameEndModalVisible: false
+        })
+        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, answer : false})
+    }
+
     isPlayerTurn = (player) => {
         if (player === 0) {
             return (signToColor(this.state.currColor)) === this.state.player1.color;
@@ -450,6 +510,26 @@ class Game extends React.Component {
         const {myname} = this.state;
         socket.emit('new message', {username: myname, message: message, })
     }
+
+    startTimer1 = () => {
+        this.countdownApi && this.countdownApi.start();
+    }
+
+    startTimer2 = () => {
+        this.countdownApi2 && this.countdownApi2.start();
+    }
+
+    handleUpdate = () => {
+        this.forceUpdate();
+    };
+
+    pauseTimer1 = () => {
+        this.countdownApi && this.countdownApi.pause();
+    };
+
+    pauseTimer2 = () => {
+        this.countdownApi2 && this.countdownApi2.pause();
+    };
 
     render() {
         let {
@@ -566,6 +646,22 @@ class Game extends React.Component {
                 >
                     <p>Your opponent would like to end the game with current board, will you accept?</p>
                 </Modal>
+                <Modal
+                    title="Game Start Request"
+                    visible={this.state.gameStartModalVisible}
+                    onOk={this.gameStartHandleOk}
+                    onCancel={this.gameStartHandleCancel}
+                    footer={[
+                        <Button key="Refuse" onClick={this.gameStartHandleCancel}>
+                            Not yet
+                    </Button>,
+                        <Button key="Accept" type="primary" onClick={this.gameStartHandleOk}>
+                            Let's start!
+                    </Button>,
+                    ]}
+                >
+                    <p>Your opponent would like to start the game, will you accept?</p>
+                </Modal>
                 <Row>
                     <Col flex='650px'>
                         <Goban vertexSize={30}
@@ -583,7 +679,11 @@ class Game extends React.Component {
                                     headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
-                                    <Countdown title="Total remaining time:" value={this.totalTime1} onFinish={this.resign} />
+                                    <Countdown
+                                        date={this.totalTime1}
+                                        ref={this.setRef1}
+                                        autoStart={false}
+                                    />
                                     <Badge dot={this.isPlayerTurn(0)}>
                                         <Statistic title='Playing' value={player1.color}></Statistic>
                                     </Badge>
@@ -594,7 +694,11 @@ class Game extends React.Component {
                                     headStyle={player2.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
-                                    <Countdown title="Total remaining time:" value={this.totalTime2} onFinish={this.resign} />
+                                    <Countdown
+                                        date={this.totalTime2}
+                                        ref={this.setRef2}
+                                        autoStart={false}
+                                    />
                                     <Badge dot={this.isPlayerTurn(1)}>
                                         <Statistic title='Playing' value={player2.color}></Statistic>
                                     </Badge>
@@ -626,6 +730,9 @@ class Game extends React.Component {
                             </Col>
                             <Col>
                                 <Button onClick={this.calcScore} disabled={end}>Calculate Score</Button>
+                            </Col>
+                            <Col>
+                                <Button onClick={this.gameStart} >Start game</Button>
                             </Col>
                         </Row>
                         <Row>
