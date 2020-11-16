@@ -6,7 +6,7 @@ import '@sabaki/go-board';
 import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import Countdown from 'react-countdown';
-import { socket } from "./api";
+import { socket, server_url } from "./api";
 import Chatbox from './view/chatbox';
 
 import moveSound0 from './data/0.mp3'
@@ -188,11 +188,33 @@ class Game extends React.Component {
                 })
             }
             if (this.state.myname !== this.state.player1.username && this.state.myname !== this.state.player2.username) {
-                this.setState({ 
+                this.setState({
                     mycolor: 'undefined',
                     isBystander: true
                 })
             }
+            const endpoint = server_url + 'message/room';
+            fetch(`${endpoint}/${encodeURIComponent(room_id)}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `bearer`,
+                    'Content-Type': 'application/json'
+                },
+                redirect: 'follow',
+            }).then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    let chats = [];
+                    data.forEach(chat => {
+                        chats.push(chat)
+                    });
+                    this.setState({
+                        chats: chats
+                    })
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
         })
 
         socket.on('room player change', (data) => {
@@ -259,9 +281,11 @@ class Game extends React.Component {
         })
 
         socket.on('game start init', () => {
-            this.setState({
-                gameStartModalVisible: true
-            })
+            if (!this.state.isBystander){
+                this.setState({
+                    gameStartModalVisible: true
+                })
+            }
         })
 
         socket.on('game rejoin', (data) => {
@@ -290,9 +314,11 @@ class Game extends React.Component {
 
         socket.on('game end init', () => {
             // TODO implement game end 
+            if (!this.state.isBystander){
             this.setState({
                 gameEndModalVisible: true
             })
+        }
         })
 
         socket.on('game end result', (data) => {
@@ -300,7 +326,8 @@ class Game extends React.Component {
             console.log('game ended');
             this.setState({
                 end: true,
-                winner: room.winner
+                winner: room.winner,
+                gameStart: false
             })
             const { player1, player2, myname } = this.state;
             if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
@@ -317,7 +344,8 @@ class Game extends React.Component {
             const room = JSON.parse(data);
             this.setState({
                 end: true,
-                winner: room.winner
+                winner: room.winner,
+                gameStart: false
             })
             const { player1, player2, myname } = this.state;
             if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
@@ -345,22 +373,25 @@ class Game extends React.Component {
                     scoreDiff: scoreResult.territoryScore
                 })
             }
+            if (!this.state.isBystander){
             this.setState({
                 scoreModalVisible: true
             })
+        }
         })
 
         socket.on('resign', () => {
             // TODO implment win message
             console.log('opponent resigned')
             this.setState({
-                end: true
+                end: true,
+                gameStart: false
             })
         })
 
         socket.on('regret init', (data) => {
             const room = JSON.parse(data);
-            if (room.room_id === this.state.room_id) {
+            if (room.room_id === this.state.room_id && !this.isBystander) {
                 this.setState({
                     regretModalVisible: true
                 })
@@ -458,7 +489,8 @@ class Game extends React.Component {
 
     resign = () => {
         this.setState({
-            end: true
+            end: true,
+            gameStart: false
         })
         socket.emit('resign', { room_id: this.state.room_id });
         message.warn('You choose to resign');
@@ -678,7 +710,7 @@ class Game extends React.Component {
                             </Row>
                             <Skeleton />
                             <Row>
-                                <Button onClick={this.gameStart} disabled={isBystander}>Start game</Button>
+                                <Button onClick={this.gameStart} disabled={isBystander || gameStart}>Start game</Button>
                             </Row>
                         </Col>
                     </Row>
@@ -826,6 +858,9 @@ class Game extends React.Component {
                             </Col>
                             <Col>
                                 <Button onClick={this.calcScore} disabled={end || isBystander}>Calculate Score</Button>
+                            </Col>
+                            <Col>
+                                <Button onClick={this.gameStart} disabled={isBystander || gameStart}>Start game</Button>
                             </Col>
                         </Row>
                         <Row>
