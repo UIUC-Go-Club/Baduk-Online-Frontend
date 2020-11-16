@@ -1,7 +1,7 @@
 import React from 'react';
 import 'antd/dist/antd.css';
 import './App.css';
-import { Layout, Menu } from 'antd';
+import { Button, Col, Layout, Menu, Row } from 'antd';
 import {
     DesktopOutlined,
     UserOutlined,
@@ -50,6 +50,11 @@ class App extends React.Component {
         this.setState({ username });
     }
 
+    logout = () => {
+        console.log('logout');
+        this.setState({ username: '' })
+    }
+
     onCollapse = collapsed => {
         console.log(collapsed);
         this.setState({ collapsed });
@@ -93,6 +98,13 @@ class App extends React.Component {
                     </Sider>
                     <Layout className="site-layout">
                         <Header className="site-layout-background" style={{ padding: 0 }}>
+                            <Row>
+                                <Col span={6} offset={18}>
+                                    <Link to=''>
+                                        <Button size='large' onClick={this.logout}>Logout</Button>
+                                    </Link>
+                                </Col>
+                            </Row>
                         </Header>
                         <Content>
                             <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
@@ -100,19 +112,19 @@ class App extends React.Component {
                                     <Route exact path="/" >
                                         <SignIn cb={this.loginSubmit} />
                                     </Route>
-                                    <Route path="/joinroom" render={ props => <RoomJoin cb={this.formSubmit} {...props} />}>
+                                    <Route path="/joinroom" render={props => <RoomJoin cb={this.formSubmit} username={this.state.username} {...props} />}>
                                     </Route>
-                                    <Route path="/signup" render={ props => <Signup cb={this.formSubmit} {...props} />}>
+                                    <Route path="/signup" render={props => <Signup cb={this.formSubmit} {...props} />}>
                                     </Route>
                                     <Route path="/game">
-                                        <Game username={this.state.username}/>
+                                        <Game username={this.state.username} />
                                     </Route>
-                                    <Route path="/profile" render={ props => <Profile username={this.state.username} {...props} />}>
+                                    <Route path="/profile" render={props => <Profile username={this.state.username} {...props} />}>
                                     </Route>
                                 </Switch>
                             </div>
                         </Content>
-                        <Footer style={{ textAlign: 'center' }}>Baduk Online Go @2020 Created by Ziyang Yu</Footer>
+                        <Footer style={{ textAlign: 'center' }}>Baduk Online Go @2020 Created by Ziyang Yu and Xingzhi Liu</Footer>
                     </Layout>
                 </Layout>
             </Router>

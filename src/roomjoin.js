@@ -26,7 +26,7 @@ class RoomJoin extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: '',
+            username: props.username,
             submitted: false
         }
     }

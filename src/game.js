@@ -117,7 +117,6 @@ class Game extends React.Component {
     }
 
     configureSocket = () => {
-
         socket.on('connect_error', () => {
             console.log('connect_error');
         })
