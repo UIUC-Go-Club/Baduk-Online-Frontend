@@ -127,14 +127,11 @@ class Game extends React.Component {
         // receive uptated board from server
         socket.on('move', (data) => {
             const room = JSON.parse(data);
-            const map = JSON.parse(room.currentBoardSignedMap);
             console.log(`received move`);
-            console.log(room.currentBoardSignedMap)
-            console.log(map)
             if (room.currentBoardSignedMap === JSON.stringify(this.state.board.signMap) && signToColor(this.state.currColor) !== this.state.mycolor) {
                 message.info('Your opponent choose to pass')
             } else {
-                let newBoard = new Board(map)
+                let newBoard = this.state.board.makeMove(room.lastMove.sign, room.lastMove.vertex);
                 this.setState({
                     board: newBoard
                 })
