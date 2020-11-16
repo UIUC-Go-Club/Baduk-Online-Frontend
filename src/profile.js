@@ -28,6 +28,11 @@ class Profile extends React.Component {
     }
     componentDidMount() {
         this.socketListeners();
+        if (this.props.location.state) {
+            this.setState({
+                name: this.props.location.state.username
+            })
+        }
         this.fetchProfileData();
     }
 
@@ -85,7 +90,7 @@ class Profile extends React.Component {
                 <Descriptions title="Profile" bordered>
                     <Descriptions.Item label="Username">{this.state.name}</Descriptions.Item>
                     <Descriptions.Item label="Email">{this.state.email}</Descriptions.Item>
-                    <Descriptions.Item label="MatchCount">Total matches placeholder</Descriptions.Item>
+                    <Descriptions.Item label="MatchCount">{this.state.live_games.length+this.state.past_games.length}</Descriptions.Item>
                 </Descriptions>
                 <Divider orientation="left">Matches</Divider>
                 <Collapse defaultActiveKey={['1']}>
@@ -100,7 +105,7 @@ class Profile extends React.Component {
                             )}
                         />
                     </Panel>
-                    <Panel header="Past matches" key="2" disabled>
+                    <Panel header="Past matches" key="2">
                     <List
                             dataSource={this.state.past_games}
                             renderItem={item => (

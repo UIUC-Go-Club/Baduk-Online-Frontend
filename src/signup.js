@@ -75,7 +75,7 @@ class Signup extends React.Component {
         const submitted = this.state.submitted;
         if (submitted) {
             return (
-                <Redirect to="/" />
+                <Redirect push to="/" />
             )
         }
         return (

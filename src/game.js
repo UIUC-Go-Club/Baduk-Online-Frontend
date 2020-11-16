@@ -5,6 +5,7 @@ import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
 import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import Countdown from 'react-countdown';
 import { socket } from "./api";
 import Chatbox from './view/chatbox';
 
@@ -14,13 +15,13 @@ import moveSound2 from './data/2.mp3'
 import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
 
-const { Countdown } = Statistic;
+// const { Countdown } = Statistic;
 const moveAudio0 = new Audio(moveSound0)
 const moveAudio1 = new Audio(moveSound1)
 const moveAudio2 = new Audio(moveSound2)
 const moveAudio3 = new Audio(moveSound3)
 const moveAudio4 = new Audio(moveSound4)
-const moveAudios = [moveAudio0,moveAudio1,moveAudio2,moveAudio2,moveAudio3,moveAudio4]
+const moveAudios = [moveAudio0, moveAudio1, moveAudio2, moveAudio2, moveAudio3, moveAudio4]
 const defaultSize = 19
 
 export function startMap(size) {
@@ -79,27 +80,27 @@ class Game extends React.Component {
             regretModalVisible: false,
             gameEndModalVisible: false,
             gameStartModalVisible: false,
-            chats : []
+            chats: []
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
 
-    totalTime1;
-    totalTime2;
+    totalTime1 = 0;
+    totalTime2 = 0;
     countdownApi1 = null;
     countdownApi2 = null;
 
-    setRef1 = (countdown) => {
-        if (countdown) {
-            this.countdownApi1 = countdown.getApi();
-        }
-    };
+    // setRef1 = (countdown) => {
+    //     if (countdown) {
+    //         this.countdownApi1 = countdown.getApi();
+    //     }
+    // };
 
-    setRef2 = (countdown) => {
-        if (countdown) {
-            this.countdownApi2 = countdown.getApi();
-        }
-    };
+    // setRef2 = (countdown) => {
+    //     if (countdown) {
+    //         this.countdownApi2 = countdown.getApi();
+    //     }
+    // };
 
     componentDidMount() {
         this.configureSocket();
@@ -139,24 +140,57 @@ class Game extends React.Component {
                 })
                 this.playMoveAudio();
             }
-            this.setState({currColor: this.state.currColor * -1});
+            this.setState({ currColor: this.state.currColor * -1 });
             if (signToColor(this.state.currColor) === this.state.mycolor) {
                 this.setState({
                     locked: false
                 })
             }
-            if (this.isPlayerTurn(0)) {
-                this.startTimer1();
-                this.pauseTimer2();
-            } else {
-                this.startTimer2();
-                this.pauseTimer1();
-            }
+            // if (this.isPlayerTurn(0)) {
+            //     this.startTimer1();
+            //     this.pauseTimer2();
+            // } else {
+            //     this.startTimer2();
+            //     this.pauseTimer1();
+            // }
         })
         socket.on('info', (data) => {
             const { username } = data;
             this.setState({ myname: username });
         })
+
+        socket.on('room player change', (data) => {
+            console.log('room player change');
+            const room = JSON.parse(data);
+            let { room_id, players, gameStarted } = room;
+            this.setState({
+                room_id: room_id,
+                gameStart: gameStarted,
+            })
+            if (gameStarted) {
+                const map = JSON.parse(room.currentBoardSignedMap);
+                this.setState({
+                    board: new Board(map),
+                    locked: !(room.players[room.currentTurn].username === this.state.myname)
+                })
+            }
+            if (players[0]) {
+                this.setState({
+                    player1: players[0],
+                })
+            }
+            if (players[0]) {
+                this.setState({
+                    player2: players[1],
+                })
+            }
+            if (this.state.myname === this.state.player1.username) {
+                this.setState({ mycolor: this.state.player1.color })
+            } else {
+                this.setState({ mycolor: this.state.player2.color })
+            }
+        })
+
         socket.on('game start', (data) => {
             const room = JSON.parse(data);
             let { room_id, players } = room;
@@ -166,8 +200,9 @@ class Game extends React.Component {
                 player1: players[0],
                 player2: players[1],
             })
-            this.totalTime1 = Date.now() + 1000 * players[0].initial_time;
-            this.totalTime2 = Date.now() + 1000 * players[1].initial_time;
+            this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
+            this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
+            console.log(this.totalTime1, this.totalTime2);
             if (this.state.myname === this.state.player1.username) {
                 this.setState({ mycolor: this.state.player1.color })
             } else {
@@ -178,22 +213,22 @@ class Game extends React.Component {
                     locked: false
                 })
             }
-            if (this.isPlayerTurn(0)) {
-                this.startTimer1();
-                this.pauseTimer2();
-            } else {
-                this.startTimer2();
-                this.pauseTimer1();
-            }
+            // if (this.isPlayerTurn(0)) {
+            //     this.startTimer1();
+            //     this.pauseTimer2();
+            // } else {
+            //     this.startTimer2();
+            //     this.pauseTimer1();
+            // }
         })
 
-        socket.on('game start init', ()=> {
+        socket.on('game start init', () => {
             this.setState({
                 gameStartModalVisible: true
             })
         })
 
-        socket.on('game rejoin', (data)=> {
+        socket.on('game rejoin', (data) => {
             const room = JSON.parse(data);
             let { room_id, players } = room;
             this.setState({
@@ -204,8 +239,9 @@ class Game extends React.Component {
                 board: new Board(JSON.parse(room.currentBoardSignedMap)),
                 locked: !(room.players[room.currentTurn].username === this.state.myname)
             })
-            this.totalTime1 = Date.now() + 1000 * players[0].initial_time;
-            this.totalTime2 = Date.now() + 1000 * players[1].initial_time;
+            this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
+            this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
+            console.log(this.totalTime1, this.totalTime2);
             if (this.state.myname === this.state.player1.username) {
                 this.setState({ mycolor: this.state.player1.color })
             } else {
@@ -230,7 +266,7 @@ class Game extends React.Component {
                 end: true,
                 winner: room.winner
             })
-            const {player1, player2, myname} = this.state;
+            const { player1, player2, myname } = this.state;
             if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
                 message.success('You Won!');
             } else {
@@ -247,7 +283,7 @@ class Game extends React.Component {
                 end: true,
                 winner: room.winner
             })
-            const {player1, player2, myname} = this.state;
+            const { player1, player2, myname } = this.state;
             if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
                 message.success('You Won!');
             } else {
@@ -259,7 +295,7 @@ class Game extends React.Component {
             // TODO implement terr count 
             const scoreResult = JSON.parse(data);
             console.log('calc score' + scoreResult);
-            const {player1} = this.state;
+            const { player1 } = this.state;
             if (player1.color === 'black') {
                 this.setState({
                     score1: scoreResult.territory[0],
@@ -320,12 +356,12 @@ class Game extends React.Component {
             }
         })
 
-        socket.on('new message', (data)=>{
+        socket.on('new message', (data) => {
             const message = JSON.parse(data);
             let chats = this.state.chats;
             chats.push(message)
             this.setState({
-                chats : chats
+                chats: chats
             })
         })
 
@@ -334,7 +370,7 @@ class Game extends React.Component {
         })
     }
 
-    
+
 
     getNextPlayer = () => { }
 
@@ -348,7 +384,7 @@ class Game extends React.Component {
         let sign = this.state.currColor;
         if (!this.state.locked && !this.state.end) {
             try {
-                this.state.board.makeMove(sign, [x, y], { preventOverwrite: true, preventKo: true})
+                this.state.board.makeMove(sign, [x, y], { preventOverwrite: true, preventKo: true })
                 this.setState({
                     locked: true
                 })
@@ -388,17 +424,17 @@ class Game extends React.Component {
         this.setState({
             end: true
         })
-        socket.emit('resign', {room_id : this.state.room_id});
+        socket.emit('resign', { room_id: this.state.room_id });
         message.warn('You choose to resign');
         console.log(`you resigned`);
     }
 
     calcScore = () => {
-        socket.emit('calc score', {room_id : this.state.room_id});
+        socket.emit('calc score', { room_id: this.state.room_id });
     }
 
     regret = () => {
-        socket.emit('regret init', {room_id : this.state.room_id, username: this.state.myname});
+        socket.emit('regret init', { room_id: this.state.room_id, username: this.state.myname });
     }
 
     /**
@@ -424,7 +460,7 @@ class Game extends React.Component {
     }
 
     gameStart = () => {
-        socket.emit('game start init', {username: this.state.myname, room_id: this.state.room_id});
+        socket.emit('game start init', { username: this.state.myname, room_id: this.state.room_id });
     }
 
     regretHandleCancel = component => {
@@ -456,7 +492,7 @@ class Game extends React.Component {
         this.setState({
             scoreModalVisible: false
         })
-        socket.emit('game end init', {room_id : this.state.room_id, username: this.state.myname});
+        socket.emit('game end init', { room_id: this.state.room_id, username: this.state.myname });
     }
 
     countHandleCancel = component => {
@@ -471,7 +507,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : true});
+        socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, ackGameEnd: true });
     }
 
     gameEndHandleCancel = component => {
@@ -479,23 +515,23 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, ackGameEnd : false})
+        socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, ackGameEnd: false })
     }
 
     gameStartHandleOk = component => {
         console.log(component);
         this.setState({
-            gameEndModalVisible: false
+            gameStartModalVisible: false
         })
-        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, answer : true});
+        socket.emit('game start response', { room_id: this.state.room_id, username: this.state.myname, answer: true });
     }
 
     gameStartHandleCancel = component => {
         console.log(component);
         this.setState({
-            gameEndModalVisible: false
+            gameStartModalVisible: false
         })
-        socket.emit('game end response', {room_id : this.state.room_id, username: this.state.myname, answer : false})
+        socket.emit('game start response', { room_id: this.state.room_id, username: this.state.myname, answer: false })
     }
 
     isPlayerTurn = (player) => {
@@ -507,29 +543,29 @@ class Game extends React.Component {
     }
 
     sendMessage = (message) => {
-        const {myname} = this.state;
-        socket.emit('new message', {username: myname, message: message, })
+        const { myname } = this.state;
+        socket.emit('new message', { username: myname, message: message, })
     }
 
-    startTimer1 = () => {
-        this.countdownApi && this.countdownApi.start();
-    }
+    // startTimer1 = () => {
+    //     this.countdownApi1 && this.countdownApi1.start();
+    // }
 
-    startTimer2 = () => {
-        this.countdownApi2 && this.countdownApi2.start();
-    }
+    // startTimer2 = () => {
+    //     this.countdownApi2 && this.countdownApi2.start();
+    // }
 
-    handleUpdate = () => {
-        this.forceUpdate();
-    };
+    // handleUpdate = () => {
+    //     this.forceUpdate();
+    // };
 
-    pauseTimer1 = () => {
-        this.countdownApi && this.countdownApi.pause();
-    };
+    // pauseTimer1 = () => {
+    //     this.countdownApi1 && this.countdownApi1.pause();
+    // };
 
-    pauseTimer2 = () => {
-        this.countdownApi2 && this.countdownApi2.pause();
-    };
+    // pauseTimer2 = () => {
+    //     this.countdownApi2 && this.countdownApi2.pause();
+    // };
 
     render() {
         let {
@@ -550,6 +586,22 @@ class Game extends React.Component {
         if (!gameStart) {
             return (
                 <div>
+                    <Modal
+                        title="Game Start Request"
+                        visible={this.state.gameStartModalVisible}
+                        onOk={this.gameStartHandleOk}
+                        onCancel={this.gameStartHandleCancel}
+                        footer={[
+                            <Button key="Refuse" onClick={this.gameStartHandleCancel}>
+                                Not yet
+                            </Button>,
+                            <Button key="Accept" type="primary" onClick={this.gameStartHandleOk}>
+                                Let's start!
+                            </Button>,
+                        ]}
+                    >
+                        <p>Your opponent would like to start the game, will you accept?</p>
+                    </Modal>
                     {/* <Skeleton active /> */}
                     <Row>
                         <Col flex='650px'>
@@ -564,7 +616,13 @@ class Game extends React.Component {
                         <Col flex='auto'>
                             <Row>
                                 <Col>
-                                    <Card title=' ' style={{ width: 300 }} loading>
+                                    <Card title={myname} style={{ width: 300 }}
+                                        headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
+                                        bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
+                                        <Statistic title='Rank' value='1d'></Statistic>
+                                        <Badge dot={this.isPlayerTurn(0)}>
+                                            <Statistic title='Playing' value={player1.color}></Statistic>
+                                        </Badge>
                                     </Card>
                                 </Col>
                                 <Col>
@@ -574,18 +632,7 @@ class Game extends React.Component {
                             </Row>
                             <Skeleton />
                             <Row>
-                                <Col>
-                                    <Skeleton.Button />
-                                </Col>
-                                <Col>
-                                <Skeleton.Button />
-                                </Col>
-                                <Col>
-                                <Skeleton.Button />
-                                </Col>
-                                <Col>
-                                <Skeleton.Button />
-                                </Col>
+                                <Button onClick={this.gameStart} >Start game</Button>
                             </Row>
                         </Col>
                     </Row>
@@ -626,8 +673,8 @@ class Game extends React.Component {
                     </Button>,
                     ]}
                 >
-                    <p>Current score is {player1.username} {score1}, {player2.username} {score2}, </p> 
-                    <p> with a {scoreDiff > 0 ? 'black lead of' + scoreDiff + 'points': 'white lead of ' + -1*scoreDiff + 'points'}, </p> 
+                    <p>Current score is {player1.username} {score1}, {player2.username} {score2}, </p>
+                    <p> with a {scoreDiff > 0 ? 'black lead of' + scoreDiff + 'points' : 'white lead of ' + -1 * scoreDiff + 'points'}, </p>
                     <p> would you like to end the game now? </p>
                 </Modal>
                 <Modal
@@ -730,9 +777,6 @@ class Game extends React.Component {
                             </Col>
                             <Col>
                                 <Button onClick={this.calcScore} disabled={end}>Calculate Score</Button>
-                            </Col>
-                            <Col>
-                                <Button onClick={this.gameStart} >Start game</Button>
                             </Col>
                         </Row>
                         <Row>

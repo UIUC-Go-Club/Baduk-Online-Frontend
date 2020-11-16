@@ -47,6 +47,7 @@ class App extends React.Component {
 
     loginSubmit = (username, password) => {
         console.log(`signed in with username: ${username} password: ${password}`);
+        this.setState({ username });
     }
 
     onCollapse = collapsed => {
@@ -96,20 +97,17 @@ class App extends React.Component {
                         <Content>
                             <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
                                 <Switch>
-                                    <Route exact path="/">
+                                    <Route exact path="/" >
                                         <SignIn cb={this.loginSubmit} />
                                     </Route>
-                                    <Route path="/joinroom">
-                                        <RoomJoin cb={this.formSubmit} username={this.state.username}/>
+                                    <Route path="/joinroom" render={ props => <RoomJoin cb={this.formSubmit} {...props} />}>
                                     </Route>
-                                    <Route path="/signup">
-                                        <Signup/>
+                                    <Route path="/signup" render={ props => <Signup cb={this.formSubmit} {...props} />}>
                                     </Route>
                                     <Route path="/game">
                                         <Game username={this.state.username}/>
                                     </Route>
-                                    <Route path="/profile">
-                                        <Profile username={this.state.username}/>
+                                    <Route path="/profile" render={ props => <Profile username={this.state.username} {...props} />}>
                                     </Route>
                                 </Switch>
                             </div>

@@ -26,6 +26,7 @@ class RoomJoin extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            username: '',
             submitted: false
         }
     }
@@ -33,6 +34,11 @@ class RoomJoin extends React.Component {
     formRef = React.createRef();
 
     componentDidMount() {
+        if (this.props.location.state) {
+            this.setState({
+                username: this.props.location.state.username
+            })
+        }
     }
 
     componentWillUnmount() {
@@ -41,16 +47,20 @@ class RoomJoin extends React.Component {
 
     handleSubmit = (values) => {
         console.log('Success:', values);
-        const room = values.room;
+        const room_id = values.room;
         const role = values.role;
-        console.log(`user: ${this.props.username} joined room ${room} as ${role}`);
-        if (role === 'player') {
-            socket.emit('join_room_player', { username: this.props.username, room_id: room });
-        } else {
-            socket.emit('join_room_bystander', { username: this.props.username, room_id: room })
+        console.log(`user: ${this.state.username} joined room ${room_id} as ${role}`);
+        if (this.state.username === '') {
+            message.warning('please login')
+            return;
         }
-        this.props.cb(this.props.username, room);
-        message.success(`joined room ${room} as ${role}`)
+        if (role === 'player') {
+            socket.emit('join_room_player', { username: this.state.username, room_id: room_id });
+        } else {
+            socket.emit('join_room_bystander', { username: this.state.username, room_id: room_id })
+        }
+        this.props.cb(this.props.username, room_id);
+        message.success(`joined room ${room_id} as ${role}`)
         this.setState({ submitted: true })
     }
 
@@ -84,7 +94,7 @@ class RoomJoin extends React.Component {
         const submitted = this.state.submitted;
         if (submitted) {
             return (
-                <Redirect to="/game" />
+                <Redirect push to="/game" />
             )
         }
         return (

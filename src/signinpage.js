@@ -24,6 +24,7 @@ class SignIn extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            username: '',
             submitted: false
         }
     }
@@ -60,7 +61,7 @@ class SignIn extends React.Component {
                 console.log('Success:', data);
                 message.success('login success');
                 this.props.cb(username, password);
-                this.setState({ submitted: true })
+                this.setState({ submitted: true, username: username })
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -81,7 +82,7 @@ class SignIn extends React.Component {
         const submitted = this.state.submitted;
         if (submitted) {
             return (
-                <Redirect to="/joinroom" />
+                <Redirect push to={{pathname: "/joinroom", state: { username: this.state.username }}} />
             )
         }
         return (
