@@ -68,14 +68,15 @@ class Game extends React.Component {
             animated: false,
             realisticPlacement: false,
             room_id: '',
-            player1: { username: 'player1', color: 'white' },
-            player2: { username: 'player2', color: 'black' },
+            player1: { username: 'waiting', color: 'white' },
+            player2: { username: 'waiting', color: 'black' },
             myname: '',
             mycolor: '',
             score1: 0,
             score2: 0,
             scoreDiff: 0,
             winner: '',
+            lastMove: undefined,
             scoreModalVisible: false,
             regretModalVisible: false,
             gameEndModalVisible: false,
@@ -133,7 +134,8 @@ class Game extends React.Component {
             } else {
                 let newBoard = this.state.board.makeMove(room.lastMove.sign, room.lastMove.vertex);
                 this.setState({
-                    board: newBoard
+                    board: newBoard,
+                    lastMove: room.lastMove
                 })
                 this.playMoveAudio();
             }
@@ -176,7 +178,7 @@ class Game extends React.Component {
                     player1: players[0],
                 })
             }
-            if (players[0]) {
+            if (players[1]) {
                 this.setState({
                     player2: players[1],
                 })
@@ -612,8 +614,11 @@ class Game extends React.Component {
                         <Col flex='100px'></Col>
                         <Col flex='auto'>
                             <Row>
+                                <Statistic title='Game Room' value={this.state.room_id}></Statistic>
+                            </Row>
+                            <Row>
                                 <Col>
-                                    <Card title={myname} style={{ width: 300 }}
+                                    <Card title={player1.username} style={{ width: 300 }}
                                         headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                         bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                         <Statistic title='Rank' value='1d'></Statistic>
@@ -623,7 +628,13 @@ class Game extends React.Component {
                                     </Card>
                                 </Col>
                                 <Col>
-                                    <Card title=' ' style={{ width: 300 }} loading>
+                                    <Card title={player2.username} style={{ width: 300 }}
+                                        headStyle={player2.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
+                                        bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
+                                        <Statistic title='Rank' value='1d'></Statistic>
+                                        <Badge dot={this.isPlayerTurn(1)}>
+                                            <Statistic title='Playing' value={player2.color}></Statistic>
+                                        </Badge>
                                     </Card>
                                 </Col>
                             </Row>
@@ -717,6 +728,9 @@ class Game extends React.Component {
                     </Col>
                     <Col flex='100px'></Col>
                     <Col flex='auto'>
+                        <Row>
+                            <Statistic title='Game Room' value={this.state.room_id}></Statistic>
+                        </Row>
                         <Row>
                             <Col>
                                 <Card title={player1.username} style={{ width: 300 }}
