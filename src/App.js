@@ -116,8 +116,7 @@ class App extends React.Component {
                                     </Route>
                                     <Route path="/signup" render={props => <Signup cb={this.formSubmit} {...props} />}>
                                     </Route>
-                                    <Route path="/game">
-                                        <Game username={this.state.username} />
+                                    <Route path="/game" render={props => <Game username={this.state.username} {...props} />}>
                                     </Route>
                                     <Route path="/profile" render={props => <Profile username={this.state.username} {...props} />}>
                                     </Route>

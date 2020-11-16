@@ -95,7 +95,7 @@ class RoomJoin extends React.Component {
         const submitted = this.state.submitted;
         if (submitted) {
             return (
-                <Redirect push to="/game" />
+                <Redirect push to={{pathname: "/game", state: { username: this.state.username }}} />
             )
         }
         return (

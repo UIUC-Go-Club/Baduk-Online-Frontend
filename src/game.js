@@ -70,7 +70,7 @@ class Game extends React.Component {
             room_id: '',
             player1: { username: 'waiting', color: 'white' },
             player2: { username: 'waiting', color: 'black' },
-            myname: '',
+            myname: props.username,
             mycolor: '',
             score1: 0,
             score2: 0,
@@ -81,7 +81,8 @@ class Game extends React.Component {
             regretModalVisible: false,
             gameEndModalVisible: false,
             gameStartModalVisible: false,
-            chats: []
+            chats: [],
+            isBystander: false,
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
@@ -105,6 +106,11 @@ class Game extends React.Component {
 
     componentDidMount() {
         this.configureSocket();
+        if (this.props.location.state) {
+            this.setState({
+                myname: this.props.location.state.username
+            })
+        }
     }
 
     componentWillUnmount() {
@@ -139,7 +145,7 @@ class Game extends React.Component {
                 this.playMoveAudio();
             }
             this.setState({ currColor: this.state.currColor * -1 });
-            if (signToColor(this.state.currColor) === this.state.mycolor) {
+            if (signToColor(this.state.currColor) === this.state.mycolor && !this.state.isBystander) {
                 this.setState({
                     locked: false
                 })
@@ -181,7 +187,12 @@ class Game extends React.Component {
                     player2: players[1],
                 })
             }
-            this.setState({ mycolor: 'undefined' })
+            if (this.state.myname !== this.state.player1.username && this.state.myname !== this.state.player2.username) {
+                this.setState({ 
+                    mycolor: 'undefined',
+                    isBystander: true
+                })
+            }
         })
 
         socket.on('room player change', (data) => {
@@ -196,7 +207,7 @@ class Game extends React.Component {
                 const map = JSON.parse(room.currentBoardSignedMap);
                 this.setState({
                     board: new Board(map),
-                    locked: !(room.players[room.currentTurn].username === this.state.myname)
+                    locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
                 })
             }
             if (players[0]) {
@@ -233,7 +244,7 @@ class Game extends React.Component {
             } else {
                 this.setState({ mycolor: this.state.player2.color })
             }
-            if (this.state.mycolor === 'black') {
+            if (this.state.mycolor === 'black' && !this.state.isBystander) {
                 this.setState({
                     locked: false
                 })
@@ -262,7 +273,7 @@ class Game extends React.Component {
                 player1: players[0],
                 player2: players[1],
                 board: new Board(JSON.parse(room.currentBoardSignedMap)),
-                locked: !(room.players[room.currentTurn].username === this.state.myname)
+                locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
             })
             this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
             this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
@@ -374,7 +385,7 @@ class Game extends React.Component {
                     }
                     this.setState({
                         board: new Board(JSON.parse(room.currentBoardSignedMap)),
-                        locked: !(room.players[room.currentTurn].username === this.state.myname)
+                        locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
                     })
                     message.success('Opponent accept your regret request');
                 }
@@ -606,7 +617,8 @@ class Game extends React.Component {
             end,
             score1,
             score2,
-            scoreDiff
+            scoreDiff,
+            isBystander,
         } = this.state;
         if (!gameStart) {
             return (
@@ -666,7 +678,7 @@ class Game extends React.Component {
                             </Row>
                             <Skeleton />
                             <Row>
-                                <Button onClick={this.gameStart} >Start game</Button>
+                                <Button onClick={this.gameStart} disabled={isBystander}>Start game</Button>
                             </Row>
                         </Col>
                     </Row>
@@ -800,20 +812,20 @@ class Game extends React.Component {
                         </Row>
                         <Row>
                             <Col>
-                                <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass} okText="Yes" cancelText="No" disabled={locked || end}>
-                                    <Button disabled={locked || end}>Pass</Button>
+                                <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass} okText="Yes" cancelText="No" disabled={locked || end || isBystander}>
+                                    <Button disabled={locked || end || isBystander}>Pass</Button>
                                 </Popconfirm>
                             </Col>
                             <Col>
-                                <Button onClick={this.regret} disabled={end}>Regret</Button>
+                                <Button onClick={this.regret} disabled={end || isBystander}>Regret</Button>
                             </Col>
                             <Col>
-                                <Popconfirm placement="top" title='Are you sure to resign?' onConfirm={this.resign} okText="Yes" cancelText="No" disabled={end}>
-                                    <Button disabled={end}>Resign</Button>
+                                <Popconfirm placement="top" title='Are you sure to resign?' onConfirm={this.resign} okText="Yes" cancelText="No" disabled={end || isBystander}>
+                                    <Button disabled={end || isBystander}>Resign</Button>
                                 </Popconfirm>
                             </Col>
                             <Col>
-                                <Button onClick={this.calcScore} disabled={end}>Calculate Score</Button>
+                                <Button onClick={this.calcScore} disabled={end || isBystander}>Calculate Score</Button>
                             </Col>
                         </Row>
                         <Row>
