@@ -9,9 +9,6 @@ const { Search } = Input;
 class Chatbox extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            chats: props.chats
-        };
         this.username = props.username;
         this.room_id = props.room_id;
     }
@@ -32,7 +29,7 @@ class Chatbox extends React.Component {
                 <List
                     className="chat-list"
                     itemLayout="horizontal"
-                    dataSource={this.state.chats}
+                    dataSource={this.props.chats}
                     renderItem={item => (
                         <li>
                             <Comment
