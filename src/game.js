@@ -6,9 +6,20 @@ import '@sabaki/go-board';
 import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { socket } from "./api";
+import Chatbox from './view/chatbox';
+
+import moveSound0 from './data/0.mp3'
+import moveSound1 from './data/1.mp3'
+import moveSound2 from './data/2.mp3'
+import moveSound3 from './data/3.mp3'
+import moveSound4 from './data/4.mp3'
 
 const { Countdown } = Statistic;
-const moveAudio = new Audio('../data/0.mp3')
+const moveAudio0 = new Audio(moveSound0)
+const moveAudio1 = new Audio(moveSound1)
+const moveAudio2 = new Audio(moveSound2)
+const moveAudio3 = new Audio(moveSound3)
+const moveAudio4 = new Audio(moveSound4)
 const defaultSize = 19
 
 export function startMap(size) {
@@ -66,6 +77,7 @@ class Game extends React.Component {
             scoreModalVisible: false,
             regretModalVisible: false,
             gameEndModalVisible: false,
+            chats : []
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
@@ -267,6 +279,15 @@ class Game extends React.Component {
             }
         })
 
+        socket.on('new message', (data)=>{
+            const message = JSON.parse(data);
+            let chats = this.state.chats;
+            chats.push(message)
+            this.setState({
+                chats : chats
+            })
+        })
+
         socket.on('debug', (debug_message) => {
             message.error(debug_message);
         })
@@ -292,6 +313,7 @@ class Game extends React.Component {
                 })
                 socket.emit('move', { room_id: this.state.room_id, sign: sign, vertex: [x, y] })
                 console.log('sent move to server');
+                moveAudio0.play();
             } catch (e) {
                 console.error(e);
             }
@@ -422,6 +444,11 @@ class Game extends React.Component {
         } else {
             return (signToColor(this.state.currColor)) === this.state.player2.color;
         }
+    }
+
+    sendMessage = (message) => {
+        const {myname} = this.state;
+        socket.emit('new message', {username: myname, message: message, })
     }
 
     render() {
@@ -600,6 +627,9 @@ class Game extends React.Component {
                             <Col>
                                 <Button onClick={this.calcScore} disabled={end}>Calculate Score</Button>
                             </Col>
+                        </Row>
+                        <Row>
+                            <Chatbox chats={this.state.chats} username={this.state.myname} room_id={this.state.room_id}></Chatbox>
                         </Row>
                     </Col>
                 </Row>

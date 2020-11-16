@@ -16,6 +16,8 @@ import {
 import Game from './game.js'
 import Profile from './profile'
 import SignIn from './signinpage';
+import RoomJoin from './roomjoin';
+
 
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -40,6 +42,10 @@ class App extends React.Component {
         this.setState({ username, room_id });
     }
 
+    loginSubmit = (username, password) => {
+        console.log(`signed in with username: ${username} password: ${password}`);
+    }
+
     onCollapse = collapsed => {
         console.log(collapsed);
         this.setState({ collapsed });
@@ -57,6 +63,11 @@ class App extends React.Component {
                             <Menu.Item key="Home" icon={<HomeOutlined />}>
                                 <Link to=''>
                                     Home
+                                </Link>
+                            </Menu.Item>
+                            <Menu.Item key="joinroom" icon={<HomeOutlined />}>
+                                <Link to='joinroom'>
+                                    Room Join
                                 </Link>
                             </Menu.Item>
                             <Menu.Item key="Game" icon={<DesktopOutlined />}>
@@ -78,10 +89,13 @@ class App extends React.Component {
                             <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
                                 <Switch>
                                     <Route exact path="/">
-                                        <SignIn cb={this.formSubmit} />
+                                        <SignIn cb={this.loginSubmit} />
+                                    </Route>
+                                    <Route path="/joinroom">
+                                        <RoomJoin cb={this.formSubmit} username={this.state.username}/>
                                     </Route>
                                     <Route path="/game">
-                                        <Game />
+                                        <Game username={this.state.username}/>
                                     </Route>
                                     <Route path="/profile">
                                         <Profile username={this.state.username}/>
