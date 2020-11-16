@@ -250,6 +250,7 @@ class Game extends React.Component {
         })
 
         socket.on('game start', (data) => {
+            this.resetBoard();
             const room = JSON.parse(data);
             let { room_id, players } = room;
             this.setState({
@@ -257,6 +258,7 @@ class Game extends React.Component {
                 room_id: room_id,
                 player1: players[0],
                 player2: players[1],
+                end: false
             })
             this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
             this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
@@ -473,7 +475,6 @@ class Game extends React.Component {
         this.setState({
             board: new Board(newMap),
             currColor: 1,
-            locked: false,
             end: false
         })
     }
