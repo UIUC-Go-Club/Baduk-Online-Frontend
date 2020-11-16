@@ -1,5 +1,5 @@
 import React from 'react'
-import { socket } from "./api";
+import { socket, server_url } from "./api";
 import { Button, Empty, Descriptions, Collapse, List, Divider } from 'antd';
 import { Link } from 'react-router-dom';
 
@@ -22,11 +22,39 @@ class Profile extends React.Component {
             name: props.username ? props.username : 'loading',
             email: 'abc@example.com',
             past_games: [],
-            live_games: []
+            live_games: [],
+            loading: true
         }
     }
     componentDidMount() {
         this.socketListeners();
+        this.fetchProfileData();
+    }
+
+    fetchProfileData = () => {
+        const endpoint = server_url + 'user/:username';
+        fetch(`${endpoint}/${encodeURIComponent(this.state.name)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow',
+        }).then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                this.setState({ 
+                    loading: false,
+                    name: data.username,
+                    email: data.email,
+                    password: data.password,
+                    rank: data.rank,
+                    past_games: data.past_games,
+                    live_games: data.active_games
+                })
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
     }
 
     socketListeners() {
@@ -63,17 +91,25 @@ class Profile extends React.Component {
                 <Collapse defaultActiveKey={['1']}>
                     <Panel header="Live Games" key="1">
                         <List
-                            dataSource={match_data}
+                            dataSource={this.state.live_games}
                             renderItem={item => (
                                 <List.Item>
-                                    Game id: {item.game_id}  Match time: {item.opponent}
-                                    <Button> replay</Button>
+                                    Room id: {item.room_id} 
+                                    <Button> rejoin</Button>
                                 </List.Item>
                             )}
                         />
                     </Panel>
                     <Panel header="Past matches" key="2" disabled>
-                        <p>placeholder</p>
+                    <List
+                            dataSource={this.state.past_games}
+                            renderItem={item => (
+                                <List.Item>
+                                    Game id: {item.game_id} 
+                                    <Button> replay</Button>
+                                </List.Item>
+                            )}
+                        />
                     </Panel>
                 </Collapse>
             </div>
