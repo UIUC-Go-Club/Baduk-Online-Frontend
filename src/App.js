@@ -5,7 +5,9 @@ import { Layout, Menu } from 'antd';
 import {
     DesktopOutlined,
     UserOutlined,
-    HomeOutlined
+    HomeOutlined,
+    SolutionOutlined,
+    SelectOutlined
 } from '@ant-design/icons';
 import {
     BrowserRouter as Router,
@@ -17,6 +19,7 @@ import Game from './game.js'
 import Profile from './profile'
 import SignIn from './signinpage';
 import RoomJoin from './roomjoin';
+import Signup from './signup';
 
 
 
@@ -65,7 +68,12 @@ class App extends React.Component {
                                     Home
                                 </Link>
                             </Menu.Item>
-                            <Menu.Item key="joinroom" icon={<HomeOutlined />}>
+                            <Menu.Item key="signup" icon={<SolutionOutlined />}>
+                                <Link to='signup'>
+                                    Signup
+                                </Link>
+                            </Menu.Item>
+                            <Menu.Item key="joinroom" icon={<SelectOutlined />}>
                                 <Link to='joinroom'>
                                     Room Join
                                 </Link>
@@ -93,6 +101,9 @@ class App extends React.Component {
                                     </Route>
                                     <Route path="/joinroom">
                                         <RoomJoin cb={this.formSubmit} username={this.state.username}/>
+                                    </Route>
+                                    <Route path="/signup">
+                                        <Signup/>
                                     </Route>
                                     <Route path="/game">
                                         <Game username={this.state.username}/>
