@@ -347,7 +347,7 @@ class Game extends React.Component {
             const { player1, player2, myname } = this.state;
             if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
                 message.success('You Won!');
-            } else {
+            } else if ((room.winner === 1 && player1.username === myname) || (room.winner === 0 && player2.username === myname)) {
                 message.error('You Lost');
             }
         })
@@ -365,7 +365,7 @@ class Game extends React.Component {
             const { player1, player2, myname } = this.state;
             if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
                 message.success('You Won!');
-            } else {
+            } else if ((room.winner === 1 && player1.username === myname) || (room.winner === 0 && player2.username === myname)) {
                 message.error('You Lost');
             }
         })
@@ -517,7 +517,7 @@ class Game extends React.Component {
             end: true,
             gameStart: false
         })
-        socket.emit('resign', { room_id: this.state.room_id, username: this.myname });
+        socket.emit('resign', { room_id: this.state.room_id, username: this.state.myname });
         message.warn('You choose to resign');
         console.log(`you resigned`);
     }
@@ -600,7 +600,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, ackGameEnd: true });
+        socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, answer: true });
     }
 
     gameEndHandleCancel = component => {
@@ -608,7 +608,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, ackGameEnd: false })
+        socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, answer: false })
     }
 
     gameStartHandleOk = component => {
