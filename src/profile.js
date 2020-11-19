@@ -20,7 +20,9 @@ class Profile extends React.Component {
         super(props);
         this.state = {
             name: props.username ? props.username : 'loading',
-            email: 'abc@example.com',
+            password: '',
+            rank: '',
+            role: '',
             past_games: [],
             live_games: [],
             loading: true
@@ -37,7 +39,7 @@ class Profile extends React.Component {
     }
 
     fetchProfileData = () => {
-        const endpoint = server_url + 'user/:username';
+        const endpoint = server_url + 'user/';
         fetch(`${endpoint}/${encodeURIComponent(this.state.name)}`, {
             method: 'GET',
             headers: {
@@ -53,6 +55,7 @@ class Profile extends React.Component {
                     email: data.email,
                     password: data.password,
                     rank: data.rank,
+                    role: data.role,
                     past_games: data.past_games,
                     live_games: data.active_games
                 })
@@ -89,7 +92,7 @@ class Profile extends React.Component {
             <div>
                 <Descriptions title="Profile" bordered>
                     <Descriptions.Item label="Username">{this.state.name}</Descriptions.Item>
-                    <Descriptions.Item label="Email">{this.state.email}</Descriptions.Item>
+                    <Descriptions.Item label="Rank">{this.state.rank}</Descriptions.Item>
                     <Descriptions.Item label="MatchCount">{this.state.live_games.length+this.state.past_games.length}</Descriptions.Item>
                 </Descriptions>
                 <Divider orientation="left">Matches</Divider>
@@ -99,7 +102,7 @@ class Profile extends React.Component {
                             dataSource={this.state.live_games}
                             renderItem={item => (
                                 <List.Item>
-                                    Room id: {item.room_id} 
+                                    Room id: {item.room_id} Between {item.players[0].username} and {item.players[1].username}
                                     <Button> rejoin</Button>
                                 </List.Item>
                             )}
@@ -110,7 +113,7 @@ class Profile extends React.Component {
                             dataSource={this.state.past_games}
                             renderItem={item => (
                                 <List.Item>
-                                    Game id: {item.game_id} 
+                                    Game id: {item._id} Between {item.players[0].username} and {item.players[1].username}
                                     <Button> replay</Button>
                                 </List.Item>
                             )}
