@@ -14,6 +14,7 @@ import moveSound1 from './data/1.mp3'
 import moveSound2 from './data/2.mp3'
 import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
+import { Redirect } from 'react-router';
 
 // const { Countdown } = Statistic;
 const moveAudio0 = new Audio(moveSound0)
@@ -65,6 +66,7 @@ class Game extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            joinFailed: false,
             gameStart: false,
             board: new Board(startMap(defaultSize)),
             currColor: 1,
@@ -431,6 +433,11 @@ class Game extends React.Component {
 
         socket.on('debug', (debug_message) => {
             message.error(debug_message);
+            if (debug_message === 'join failed because there are already 2 players, jion as bystander instead') {
+                this.setState({
+                    joinFailed: true,
+                })
+            }
         })
     }
 
@@ -634,6 +641,7 @@ class Game extends React.Component {
 
     render() {
         let {
+            joinFailed,
             gameStart,
             board,
             locked,
@@ -651,6 +659,11 @@ class Game extends React.Component {
             markLastMove,
             markerMap,
         } = this.state;
+        if (joinFailed) {
+            return (
+                <Redirect push to={{pathname: "/joinroom", state: { username: myname }}} />
+            );
+        }
         if (!gameStart) {
             return (
                 <div>

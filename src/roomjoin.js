@@ -61,7 +61,7 @@ class RoomJoin extends React.Component {
             console.log('bystander join');
         }
         this.props.cb(this.props.username, room_id);
-        message.success(`joined room ${room_id} as ${role}`)
+        message.info(`try to join room ${room_id} as ${role}`)
         this.setState({ submitted: true })
     }
 
