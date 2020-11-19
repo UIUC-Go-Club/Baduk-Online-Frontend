@@ -99,7 +99,10 @@ class App extends React.Component {
                     <Layout className="site-layout">
                         <Header className="site-layout-background" style={{ padding: 0 }}>
                             <Row>
-                                <Col span={6} offset={18}>
+                                <Col span={6}>
+                                    <h1>{this.state.username!=='' && `     Welcome ${this.state.username}`}</h1>
+                                </Col>
+                                <Col span={6} offset={12}>
                                     <Link to=''>
                                         <Button size='large' onClick={this.logout}>Logout</Button>
                                     </Link>
