@@ -154,9 +154,13 @@ class Game extends React.Component {
                 let newBoard = this.state.board.makeMove(room.lastMove.sign, room.lastMove.vertex);
                 this.setState({
                     board: newBoard,
-                    lastMove: room.lastMove,
-                    markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
                 })
+                if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
+                    this.setState({
+                        lastMove: room.lastMove,
+                        markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
+                    })
+                }
                 this.playMoveAudio();
             }
             this.setState({ currColor: this.state.currColor * -1 });
@@ -192,7 +196,7 @@ class Game extends React.Component {
                 this.setState({
                     board: new Board(map),
                 })
-                if (room.lastMove) {
+                if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                     this.setState({
                         lastMove: room.lastMove,
                         markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
@@ -254,7 +258,7 @@ class Game extends React.Component {
                     board: new Board(map),
                     locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander,
                 })
-                if (room.lastMove) {
+                if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                     this.setState({
                         lastMove: room.lastMove,
                         markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
@@ -429,7 +433,7 @@ class Game extends React.Component {
                         board: new Board(JSON.parse(room.currentBoardSignedMap)),
                         locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
                     })
-                    if (room.lastMove) {
+                    if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                         this.setState({
                             lastMove: room.lastMove,
                             markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
