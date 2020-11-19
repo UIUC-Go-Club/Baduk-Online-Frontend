@@ -32,7 +32,7 @@ export function startMap(size) {
 export function generateMarkerMap(size, vertex) {
     let O = { type: 'circle' };
     let ret = new Array(size).fill(null).map(() => new Array(size).fill(null));
-    if (vertex[0] < 0 || vertex[1] < 0 ) {
+    if (vertex[0] < 0 || vertex[1] < 0) {
         return ret;
     }
     ret[vertex[1]][vertex[0]] = O;
@@ -256,7 +256,7 @@ class Game extends React.Component {
                 const map = JSON.parse(room.currentBoardSignedMap);
                 this.setState({
                     board: new Board(map),
-                    locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander,
+                    locked: !(room.players[room.currentTurn].username === this.state.myname) || this.state.isBystander,
                 })
                 if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                     this.setState({
@@ -340,15 +340,17 @@ class Game extends React.Component {
             const room = JSON.parse(data);
             console.log('game ended');
             this.setState({
-                end: true,
+                end: room.gameFinished,
                 winner: room.winner,
-                gameStart: false
+                gameStart: !room.gameFinished,
             })
-            const { player1, player2, myname } = this.state;
-            if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
-                message.success('You Won!');
-            } else if ((room.winner === 1 && player1.username === myname) || (room.winner === 0 && player2.username === myname)) {
-                message.error('You Lost');
+            if (this.state.end) {
+                const { player1, player2, myname } = this.state;
+                if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
+                    message.success('You Won!');
+                } else if ((room.winner === 1 && player1.username === myname) || (room.winner === 0 && player2.username === myname)) {
+                    message.error('You Lost');
+                }
             }
         })
 
@@ -431,7 +433,7 @@ class Game extends React.Component {
                     }
                     this.setState({
                         board: new Board(JSON.parse(room.currentBoardSignedMap)),
-                        locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
+                        locked: !(room.players[room.currentTurn].username === this.state.myname) || this.state.isBystander
                     })
                     if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                         this.setState({
