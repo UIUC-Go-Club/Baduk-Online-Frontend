@@ -513,7 +513,7 @@ class Game extends React.Component {
             end: true,
             gameStart: false
         })
-        socket.emit('resign', { room_id: this.state.room_id });
+        socket.emit('resign', { room_id: this.state.room_id, username: this.myname });
         message.warn('You choose to resign');
         console.log(`you resigned`);
     }
