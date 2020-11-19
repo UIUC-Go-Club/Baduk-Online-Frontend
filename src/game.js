@@ -188,9 +188,13 @@ class Game extends React.Component {
                 const map = JSON.parse(room.currentBoardSignedMap);
                 this.setState({
                     board: new Board(map),
-                    lastMove: room.lastMove,
-                    markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
                 })
+                if (room.lastMove) {
+                    this.setState({
+                        lastMove: room.lastMove,
+                        markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
+                    })
+                }
             }
             if (players[0]) {
                 this.setState({
@@ -246,9 +250,13 @@ class Game extends React.Component {
                 this.setState({
                     board: new Board(map),
                     locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander,
-                    lastMove: room.lastMove,
-                    markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
                 })
+                if (room.lastMove) {
+                    this.setState({
+                        lastMove: room.lastMove,
+                        markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
+                    })
+                }
             }
             if (players[0]) {
                 this.setState({
@@ -416,10 +424,14 @@ class Game extends React.Component {
                     }
                     this.setState({
                         board: new Board(JSON.parse(room.currentBoardSignedMap)),
-                        lastMove: room.lastMove,
-                        markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex),
                         locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
                     })
+                    if (room.lastMove) {
+                        this.setState({
+                            lastMove: room.lastMove,
+                            markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
+                        })
+                    }
                     message.success('Opponent accept your regret request');
                 }
             }
@@ -852,7 +864,9 @@ class Game extends React.Component {
                                 <List
                                     className="bystander-list"
                                     itemLayout="vertical"
+                                    bordered
                                     dataSource={this.state.bystanders}
+                                    locale={{ emptyText: 'No bystander' }}
                                     renderItem={user => (
                                         <Statistic title='bystander' value={user.username}></Statistic>
                                     )}

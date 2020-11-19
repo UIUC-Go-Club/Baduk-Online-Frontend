@@ -30,6 +30,7 @@ class Chatbox extends React.Component {
                     className="chat-list"
                     itemLayout="horizontal"
                     dataSource={this.props.chats}
+                    locale={{emptyText: 'No chat messages yet.'}}
                     renderItem={item => (
                         <li>
                             <Comment
