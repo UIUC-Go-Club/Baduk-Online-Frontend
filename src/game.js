@@ -406,7 +406,7 @@ class Game extends React.Component {
 
         socket.on('regret init', (data) => {
             const room = JSON.parse(data);
-            if (room.room_id === this.state.room_id && !this.isBystander) {
+            if (room.room_id === this.state.room_id && !this.state.isBystander) {
                 this.setState({
                     regretModalVisible: true
                 })
