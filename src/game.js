@@ -32,6 +32,9 @@ export function startMap(size) {
 export function generateMarkerMap(size, vertex) {
     let O = { type: 'circle' };
     let ret = new Array(size).fill(null).map(() => new Array(size).fill(null));
+    if (vertex[0] < 0 || vertex[1] < 0 ) {
+        return ret;
+    }
     ret[vertex[1]][vertex[0]] = O;
     return ret;
 }
