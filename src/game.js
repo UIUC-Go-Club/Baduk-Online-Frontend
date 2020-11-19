@@ -3,7 +3,7 @@ import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
-import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton } from 'antd';
+import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton, List } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import Countdown from 'react-countdown';
 import { socket, server_url } from "./api";
@@ -30,7 +30,7 @@ export function startMap(size) {
 }
 
 export function generateMarkerMap(size, vertex) {
-    let O = {type: 'circle'};
+    let O = { type: 'circle' };
     let ret = new Array(size).fill(null).map(() => new Array(size).fill(null));
     ret[vertex[1]][vertex[0]] = O;
     return ret;
@@ -91,6 +91,7 @@ class Game extends React.Component {
             gameEndModalVisible: false,
             gameStartModalVisible: false,
             chats: [],
+            bystanders: [],
             isBystander: false,
             initialTime1: 0,
             initialTime2: 0,
@@ -177,10 +178,11 @@ class Game extends React.Component {
         socket.on('room bystander change', (data) => {
             console.log('room bystander change');
             const room = JSON.parse(data);
-            let { room_id, players, gameStarted } = room;
+            let { room_id, players, gameStarted, bystanders } = room;
             this.setState({
                 room_id: room_id,
                 gameStart: gameStarted,
+                bystanders: bystanders,
             })
             if (gameStarted) {
                 const map = JSON.parse(room.currentBoardSignedMap);
@@ -233,10 +235,11 @@ class Game extends React.Component {
         socket.on('room player change', (data) => {
             console.log('room player change');
             const room = JSON.parse(data);
-            let { room_id, players, gameStarted } = room;
+            let { room_id, players, gameStarted, bystanders } = room;
             this.setState({
                 room_id: room_id,
                 gameStart: gameStarted,
+                bystanders: bystanders,
             })
             if (gameStarted) {
                 const map = JSON.parse(room.currentBoardSignedMap);
@@ -276,12 +279,12 @@ class Game extends React.Component {
                 end: false
             })
             this.setState({
-                initialTime1 : Date.now() + 1000 * players[0].reservedTimeLeft,
-                initialTime2 : Date.now() + 1000 * players[1].reservedTimeLeft,
+                initialTime1: Date.now() + 1000 * players[0].reservedTimeLeft,
+                initialTime2: Date.now() + 1000 * players[1].reservedTimeLeft,
             })
             // this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
             // this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
-            
+
             if (this.state.myname === this.state.player1.username) {
                 this.setState({ mycolor: this.state.player1.color })
             } else {
@@ -302,7 +305,7 @@ class Game extends React.Component {
         })
 
         socket.on('game start init', () => {
-            if (!this.state.isBystander){
+            if (!this.state.isBystander) {
                 this.setState({
                     gameStartModalVisible: true
                 })
@@ -311,11 +314,11 @@ class Game extends React.Component {
 
         socket.on('game end init', () => {
             // TODO implement game end 
-            if (!this.state.isBystander){
-            this.setState({
-                gameEndModalVisible: true
-            })
-        }
+            if (!this.state.isBystander) {
+                this.setState({
+                    gameEndModalVisible: true
+                })
+            }
         })
 
         socket.on('game end result', (data) => {
@@ -370,11 +373,11 @@ class Game extends React.Component {
                     scoreDiff: scoreResult.territoryScore
                 })
             }
-            if (!this.state.isBystander){
-            this.setState({
-                scoreModalVisible: true
-            })
-        }
+            if (!this.state.isBystander) {
+                this.setState({
+                    scoreModalVisible: true
+                })
+            }
         })
 
         socket.on('resign', () => {
@@ -433,11 +436,11 @@ class Game extends React.Component {
 
         socket.on('debug', (debug_message) => {
             message.error(debug_message);
-            if (debug_message === 'join failed because there are already 2 players, jion as bystander instead') {
-                this.setState({
-                    joinFailed: true,
-                })
-            }
+            // if (debug_message === 'join failed because there are already 2 players, jion as bystander instead') {
+            //     this.setState({
+            //         joinFailed: true,
+            //     })
+            // }
         })
     }
 
@@ -661,7 +664,7 @@ class Game extends React.Component {
         } = this.state;
         if (joinFailed) {
             return (
-                <Redirect push to={{pathname: "/joinroom", state: { username: myname }}} />
+                <Redirect push to={{ pathname: "/joinroom", state: { username: myname } }} />
             );
         }
         if (!gameStart) {
@@ -844,6 +847,16 @@ class Game extends React.Component {
                                         <Statistic title='Playing' value={player2.color}></Statistic>
                                     </Badge>
                                 </Card>
+                            </Col>
+                            <Col>
+                                <List
+                                    className="bystander-list"
+                                    itemLayout="vertical"
+                                    dataSource={this.state.bystanders}
+                                    renderItem={user => (
+                                        <Statistic title='bystander' value={user.username}></Statistic>
+                                    )}
+                                />
                             </Col>
                         </Row>
                         <Row>
