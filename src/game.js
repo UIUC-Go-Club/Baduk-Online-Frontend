@@ -28,6 +28,13 @@ export function startMap(size) {
     return new Array(size).fill(0).map(() => new Array(size).fill(0));
 }
 
+export function generateMarkerMap(size, vertex) {
+    let O = {type: 'circle'};
+    let ret = new Array(size).fill(null).map(() => new Array(size).fill(null));
+    ret[vertex[1]][vertex[0]] = O;
+    return ret;
+}
+
 export function signToColor(sign) {
     if (sign === 1) {
         return "black";
@@ -83,14 +90,15 @@ class Game extends React.Component {
             gameStartModalVisible: false,
             chats: [],
             isBystander: false,
+            initialTime1: 0,
+            initialTime2: 0,
+            markLastMove: false,
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
 
-    totalTime1 = 0;
-    totalTime2 = 0;
-    countdownApi1 = null;
-    countdownApi2 = null;
+    // countdownApi1 = null;
+    // countdownApi2 = null;
 
     // setRef1 = (countdown) => {
     //     if (countdown) {
@@ -140,7 +148,8 @@ class Game extends React.Component {
                 let newBoard = this.state.board.makeMove(room.lastMove.sign, room.lastMove.vertex);
                 this.setState({
                     board: newBoard,
-                    lastMove: room.lastMove
+                    lastMove: room.lastMove,
+                    markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
                 })
                 this.playMoveAudio();
             }
@@ -175,6 +184,8 @@ class Game extends React.Component {
                 const map = JSON.parse(room.currentBoardSignedMap);
                 this.setState({
                     board: new Board(map),
+                    lastMove: room.lastMove,
+                    markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
                 })
             }
             if (players[0]) {
@@ -229,7 +240,9 @@ class Game extends React.Component {
                 const map = JSON.parse(room.currentBoardSignedMap);
                 this.setState({
                     board: new Board(map),
-                    locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
+                    locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander,
+                    lastMove: room.lastMove,
+                    markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
                 })
             }
             if (players[0]) {
@@ -260,9 +273,13 @@ class Game extends React.Component {
                 player2: players[1],
                 end: false
             })
-            this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
-            this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
-            console.log(this.totalTime1, this.totalTime2);
+            this.setState({
+                initialTime1 : Date.now() + 1000 * players[0].reservedTimeLeft,
+                initialTime2 : Date.now() + 1000 * players[1].reservedTimeLeft,
+            })
+            // this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
+            // this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
+            
             if (this.state.myname === this.state.player1.username) {
                 this.setState({ mycolor: this.state.player1.color })
             } else {
@@ -288,30 +305,6 @@ class Game extends React.Component {
                     gameStartModalVisible: true
                 })
             }
-        })
-
-        socket.on('game rejoin', (data) => {
-            const room = JSON.parse(data);
-            let { room_id, players } = room;
-            this.setState({
-                gameStart: true,
-                room_id: room_id,
-                player1: players[0],
-                player2: players[1],
-                board: new Board(JSON.parse(room.currentBoardSignedMap)),
-                locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
-            })
-            this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
-            this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
-            console.log(this.totalTime1, this.totalTime2);
-            if (this.state.myname === this.state.player1.username) {
-                this.setState({ mycolor: this.state.player1.color })
-            } else {
-                this.setState({ mycolor: this.state.player2.color })
-            }
-            this.setState({
-                currColor: colorToSign(room.players[room.currentTurn].color)
-            })
         })
 
         socket.on('game end init', () => {
@@ -418,6 +411,8 @@ class Game extends React.Component {
                     }
                     this.setState({
                         board: new Board(JSON.parse(room.currentBoardSignedMap)),
+                        lastMove: room.lastMove,
+                        markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex),
                         locked: !(room.players[room.currentTurn].username === this.state.myname) && !this.state.isBystander
                     })
                     message.success('Opponent accept your regret request');
@@ -617,6 +612,7 @@ class Game extends React.Component {
     }
 
     // startTimer1 = () => {
+    //     console.log(this.countdownApi1);
     //     this.countdownApi1 && this.countdownApi1.start();
     // }
 
@@ -652,6 +648,8 @@ class Game extends React.Component {
             score2,
             scoreDiff,
             isBystander,
+            markLastMove,
+            markerMap,
         } = this.state;
         if (!gameStart) {
             return (
@@ -792,6 +790,7 @@ class Game extends React.Component {
                     <Col flex='650px'>
                         <Goban vertexSize={30}
                             signMap={board.signMap}
+                            markerMap={markLastMove && markerMap}
                             showCoordinates={showCoordinates}
                             fuzzyStonePlacement={realisticPlacement}
                             animateStonePlacement={animated}
@@ -808,11 +807,11 @@ class Game extends React.Component {
                                     headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
-                                    <Countdown
-                                        date={this.totalTime1}
+                                    {/* <Countdown
+                                        date={this.state.initialTime1}
                                         ref={this.setRef1}
                                         autoStart={false}
-                                    />
+                                    /> */}
                                     <Badge dot={this.isPlayerTurn(0)}>
                                         <Statistic title='Playing' value={player1.color}></Statistic>
                                     </Badge>
@@ -823,11 +822,11 @@ class Game extends React.Component {
                                     headStyle={player2.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
-                                    <Countdown
-                                        date={this.totalTime2}
+                                    {/* <Countdown
+                                        date={this.state.initialTime2}
                                         ref={this.setRef2}
                                         autoStart={false}
-                                    />
+                                    /> */}
                                     <Badge dot={this.isPlayerTurn(1)}>
                                         <Statistic title='Playing' value={player2.color}></Statistic>
                                     </Badge>
@@ -842,6 +841,9 @@ class Game extends React.Component {
                         </Row>
                         <Row>
                             <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
+                        </Row>
+                        <Row>
+                            <this.toggleSwitch stateKey={'markLastMove'} text={'mark last move'} checked={false}></this.toggleSwitch>
                         </Row>
                         <Row>
                             <Col>
