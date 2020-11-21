@@ -96,8 +96,8 @@ class Game extends React.Component {
             chats: [],
             bystanders: [],
             isBystander: false,
-            initialTime1: 0,
-            initialTime2: 0,
+            initialTime1: 1,
+            initialTime2: 1,
             markLastMove: false,
         }
         this.toggleSwitch = createTwoWaySwitch(this);
@@ -106,17 +106,17 @@ class Game extends React.Component {
     // countdownApi1 = null;
     // countdownApi2 = null;
 
-    // setRef1 = (countdown) => {
-    //     if (countdown) {
-    //         this.countdownApi1 = countdown.getApi();
-    //     }
-    // };
+    setRef1 = (countdown) => {
+        if (countdown) {
+            this.countdownApi1 = countdown.getApi();
+        }
+    };
 
-    // setRef2 = (countdown) => {
-    //     if (countdown) {
-    //         this.countdownApi2 = countdown.getApi();
-    //     }
-    // };
+    setRef2 = (countdown) => {
+        if (countdown) {
+            this.countdownApi2 = countdown.getApi();
+        }
+    };
 
     componentDidMount() {
         this.configureSocket();
@@ -169,13 +169,13 @@ class Game extends React.Component {
                     locked: false
                 })
             }
-            // if (this.isPlayerTurn(0)) {
-            //     this.startTimer1();
-            //     this.pauseTimer2();
-            // } else {
-            //     this.startTimer2();
-            //     this.pauseTimer1();
-            // }
+            if (this.isPlayerTurn(0)) {
+                this.startTimer1();
+                this.pauseTimer2();
+            } else {
+                this.startTimer2();
+                this.pauseTimer1();
+            }
         })
         socket.on('info', (data) => {
             const { username } = data;
@@ -310,13 +310,13 @@ class Game extends React.Component {
                     locked: false
                 })
             }
-            // if (this.isPlayerTurn(0)) {
-            //     this.startTimer1();
-            //     this.pauseTimer2();
-            // } else {
-            //     this.startTimer2();
-            //     this.pauseTimer1();
-            // }
+            if (this.isPlayerTurn(0)) {
+                this.startTimer1();
+                this.pauseTimer2();
+            } else {
+                this.startTimer2();
+                this.pauseTimer1();
+            }
         })
 
         socket.on('game start init', () => {
@@ -509,7 +509,7 @@ class Game extends React.Component {
         this.setState({
             locked: true
         })
-        socket.emit('move', { room_id: this.state.room_id, sign: 0, vertex: [-1, -1] })
+        socket.emit('move', { room_id: this.state.room_id, sign: this.state.currColor, vertex: [-1, -1] })
         console.log(`you passed`);
         message.info('You passed');
     }
@@ -642,26 +642,26 @@ class Game extends React.Component {
         socket.emit('new message', { username: myname, message: message, })
     }
 
-    // startTimer1 = () => {
-    //     console.log(this.countdownApi1);
-    //     this.countdownApi1 && this.countdownApi1.start();
-    // }
+    startTimer1 = () => {
+        console.log(this.countdownApi1);
+        this.countdownApi1 && this.countdownApi1.start();
+    }
 
-    // startTimer2 = () => {
-    //     this.countdownApi2 && this.countdownApi2.start();
-    // }
+    startTimer2 = () => {
+        this.countdownApi2 && this.countdownApi2.start();
+    }
 
-    // handleUpdate = () => {
-    //     this.forceUpdate();
-    // };
+    handleUpdate = () => {
+        this.forceUpdate();
+    };
 
-    // pauseTimer1 = () => {
-    //     this.countdownApi1 && this.countdownApi1.pause();
-    // };
+    pauseTimer1 = () => {
+        this.countdownApi1 && this.countdownApi1.pause();
+    };
 
-    // pauseTimer2 = () => {
-    //     this.countdownApi2 && this.countdownApi2.pause();
-    // };
+    pauseTimer2 = () => {
+        this.countdownApi2 && this.countdownApi2.pause();
+    };
 
     render() {
         let {
@@ -844,11 +844,11 @@ class Game extends React.Component {
                                     headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
-                                    {/* <Countdown
+                                    <Countdown
                                         date={this.state.initialTime1}
                                         ref={this.setRef1}
                                         autoStart={false}
-                                    /> */}
+                                    />
                                     <Badge dot={this.isPlayerTurn(0)}>
                                         <Statistic title='Playing' value={player1.color}></Statistic>
                                     </Badge>
@@ -859,11 +859,11 @@ class Game extends React.Component {
                                     headStyle={player2.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
-                                    {/* <Countdown
+                                    {<Countdown
                                         date={this.state.initialTime2}
                                         ref={this.setRef2}
                                         autoStart={false}
-                                    /> */}
+                                    />}
                                     <Badge dot={this.isPlayerTurn(1)}>
                                         <Statistic title='Playing' value={player2.color}></Statistic>
                                     </Badge>
