@@ -39,7 +39,16 @@
     "build": "yarn react-build && yarn electron-build"
   },
   "build": {
-    "appId": "com.baduk.frontend"
+    "appId": "com.baduk.frontend",
+    "mac": {
+      "icon": "build/app.png"
+    },
+    "win": {
+      "icon": "build/app.png"
+    },
+    "linux": {
+      "icon": "build/app.png"
+    }
   },
   "eslintConfig": {
     "extends": [
