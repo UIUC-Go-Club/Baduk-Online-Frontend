@@ -5,7 +5,7 @@ import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
 import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton, List } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
-import Countdown from 'react-countdown';
+import Countdown, { zeroPad } from 'react-countdown';
 import { socket, server_url } from "./api";
 import Chatbox from './view/chatbox';
 
@@ -663,6 +663,10 @@ class Game extends React.Component {
         this.countdownApi2 && this.countdownApi2.pause();
     };
 
+    countdownRenderer = ({ hours, minutes, seconds }) => (
+        <Statistic title='Remaining Time' value={`${zeroPad(hours)}:${zeroPad(minutes)}:${zeroPad(seconds)}`} />
+    );
+
     render() {
         let {
             joinFailed,
@@ -848,6 +852,7 @@ class Game extends React.Component {
                                         date={this.state.initialTime1}
                                         ref={this.setRef1}
                                         autoStart={false}
+                                        renderer={this.countdownRenderer}
                                     />
                                     <Badge dot={this.isPlayerTurn(0)}>
                                         <Statistic title='Playing' value={player1.color}></Statistic>
@@ -863,6 +868,7 @@ class Game extends React.Component {
                                         date={this.state.initialTime2}
                                         ref={this.setRef2}
                                         autoStart={false}
+                                        renderer={this.countdownRenderer}
                                     />}
                                     <Badge dot={this.isPlayerTurn(1)}>
                                         <Statistic title='Playing' value={player2.color}></Statistic>
