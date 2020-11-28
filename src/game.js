@@ -96,8 +96,12 @@ class Game extends React.Component {
             chats: [],
             bystanders: [],
             isBystander: false,
-            initialTime1: 1,
-            initialTime2: 1,
+            timeLeft1: 1,
+            timeLeft2: 1,
+            reservedTimeLeft1: 1,
+            reservedTimeLeft2: 1,
+            countdownLeft1: 3,
+            countdownLeft2: 3,
             markLastMove: false,
         }
         this.toggleSwitch = createTwoWaySwitch(this);
@@ -164,17 +168,26 @@ class Game extends React.Component {
                 this.playMoveAudio();
             }
             this.setState({ currColor: this.state.currColor * -1 });
+            console.log('color change')
             if (signToColor(this.state.currColor) === this.state.mycolor && !this.state.isBystander) {
                 this.setState({
                     locked: false
                 })
             }
+            this.pauseTimer1();
+            this.pauseTimer2();
+            this.setState({
+                timeLeft1: room.players[0].reservedTimeLeft,
+                timeLeft2: room.players[1].reservedTimeLeft,
+                reservedTimeLeft1: Date.now() + room.players[0].reservedTimeLeft,
+                reservedTimeLeft2: Date.now() + room.players[1].reservedTimeLeft,
+                countdownLeft1: room.players[0].countdownLeft,
+                countdownLeft2: room.players[1].countdownLeft,
+            })
             if (this.isPlayerTurn(0)) {
                 this.startTimer1();
-                this.pauseTimer2();
             } else {
                 this.startTimer2();
-                this.pauseTimer1();
             }
         })
         socket.on('info', (data) => {
@@ -195,6 +208,12 @@ class Game extends React.Component {
                 const map = JSON.parse(room.currentBoardSignedMap);
                 this.setState({
                     board: new Board(map),
+                    timeLeft1: players[0].reservedTimeLeft,
+                    reservedTimeLeft1: Date.now() + players[0].reservedTimeLeft,
+                    countdownLeft1: players[0].countdownLeft,
+                    timeLeft2: players[1].reservedTimeLeft,
+                    reservedTimeLeft2: Date.now() + players[1].reservedTimeLeft,
+                    countdownLeft2: players[1].countdownLeft,
                 })
                 if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                     this.setState({
@@ -257,6 +276,12 @@ class Game extends React.Component {
                 this.setState({
                     board: new Board(map),
                     locked: !(room.players[room.currentTurn].username === this.state.myname) || this.state.isBystander,
+                    timeLeft1: players[0].reservedTimeLeft,
+                    reservedTimeLeft1: Date.now() + players[0].reservedTimeLeft,
+                    countdownLeft1: players[0].countdownLeft,
+                    timeLeft2: players[1].reservedTimeLeft,
+                    reservedTimeLeft2: Date.now() + players[1].reservedTimeLeft,
+                    countdownLeft2: players[1].countdownLeft,
                 })
                 if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                     this.setState({
@@ -280,6 +305,28 @@ class Game extends React.Component {
             } else {
                 this.setState({ mycolor: this.state.player2.color })
             }
+            const endpoint = server_url + 'message/room';
+            fetch(`${endpoint}/${encodeURIComponent(room_id)}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `bearer`,
+                    'Content-Type': 'application/json'
+                },
+                redirect: 'follow',
+            }).then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    let chats = [];
+                    data.forEach(chat => {
+                        chats.push(chat)
+                    });
+                    this.setState({
+                        chats: chats
+                    })
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
         })
 
         socket.on('game start', (data) => {
@@ -294,11 +341,15 @@ class Game extends React.Component {
                 end: false
             })
             this.setState({
-                initialTime1: Date.now() + 1000 * players[0].reservedTimeLeft,
-                initialTime2: Date.now() + 1000 * players[1].reservedTimeLeft,
+                timeLeft1: players[0].reservedTimeLeft,
+                timeLeft2: players[1].reservedTimeLeft,
+                reservedTimeLeft1: Date.now() + players[0].reservedTimeLeft,
+                reservedTimeLeft2: Date.now() + players[1].reservedTimeLeft,
+                countdownLeft1: players[0].countdownLeft,
+                countdownLeft2: players[1].countdownLeft,
             })
-            // this.totalTime1 = Date.now() + 1000 * players[0].reservedTimeLeft;
-            // this.totalTime2 = Date.now() + 1000 * players[1].reservedTimeLeft;
+            // this.totalTime1 = Date.now() + players[0].reservedTimeLeft;
+            // this.totalTime2 = Date.now() + players[1].reservedTimeLeft;
 
             if (this.state.myname === this.state.player1.username) {
                 this.setState({ mycolor: this.state.player1.color })
@@ -312,10 +363,8 @@ class Game extends React.Component {
             }
             if (this.isPlayerTurn(0)) {
                 this.startTimer1();
-                this.pauseTimer2();
             } else {
                 this.startTimer2();
-                this.pauseTimer1();
             }
         })
 
@@ -483,7 +532,28 @@ class Game extends React.Component {
                 this.setState({
                     locked: true
                 })
-                socket.emit('move', { room_id: this.state.room_id, sign: sign, vertex: [x, y] })
+                if (this.isPlayerTurn(0)) {
+                    this.pauseTimer1();
+                    setTimeout(() => {
+                        socket.emit('move', { 
+                        room_id: this.state.room_id, 
+                        sign: sign, 
+                        vertex: [x, y], 
+                        reservedTimeLeft: this.state.timeLeft1,
+                        countdownLeft: this.state.countdownLeft1
+                    })}, 100)
+                } else if (this.isPlayerTurn(1)) {
+                    this.pauseTimer2();
+                    setTimeout(() => {
+                        socket.emit('move', { 
+                        room_id: this.state.room_id, 
+                        sign: sign, 
+                        vertex: [x, y], 
+                        reservedTimeLeft: this.state.timeLeft2,
+                        countdownLeft: this.state.countdownLeft2
+                    })}, 100)
+                }
+                
                 console.log('sent move to server');
             } catch (e) {
                 console.error(e);
@@ -551,7 +621,7 @@ class Game extends React.Component {
     }
 
     restartTimer = (startTime) => {
-        return (Date.now() + 1000 * startTime)
+        return (Date.now() + startTime)
     }
 
     gameStart = () => {
@@ -643,11 +713,12 @@ class Game extends React.Component {
     }
 
     startTimer1 = () => {
-        console.log(this.countdownApi1);
+        // console.log('timer1 start');
         this.countdownApi1 && this.countdownApi1.start();
     }
 
     startTimer2 = () => {
+        // console.log('timer2 start');
         this.countdownApi2 && this.countdownApi2.start();
     }
 
@@ -656,16 +727,28 @@ class Game extends React.Component {
     };
 
     pauseTimer1 = () => {
+        // console.log('timer1 pause');
         this.countdownApi1 && this.countdownApi1.pause();
     };
 
     pauseTimer2 = () => {
+        // console.log('timer2 pause');
         this.countdownApi2 && this.countdownApi2.pause();
     };
 
     countdownRenderer = ({ hours, minutes, seconds }) => (
         <Statistic title='Remaining Time' value={`${zeroPad(hours)}:${zeroPad(minutes)}:${zeroPad(seconds)}`} />
     );
+
+    countdownPause = (timerNo) => ({total}) => {
+        this.setState(() => ({
+            ['timeLeft' + timerNo] : total
+        }))
+    }
+
+    countdownStop = () => {
+
+    }
 
     render() {
         let {
@@ -687,6 +770,7 @@ class Game extends React.Component {
             markLastMove,
             markerMap,
         } = this.state;
+        const self = this;
         if (joinFailed) {
             return (
                 <Redirect push to={{ pathname: "/joinroom", state: { username: myname } }} />
@@ -848,10 +932,12 @@ class Game extends React.Component {
                                     headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
+                                    <Statistic title='Remaining Countdown Chance' value={this.state.countdownLeft1}></Statistic>
                                     <Countdown
-                                        date={this.state.initialTime1}
+                                        date={this.state.reservedTimeLeft1}
                                         ref={this.setRef1}
                                         autoStart={false}
+                                        onPause={this.countdownPause(1)}
                                         renderer={this.countdownRenderer}
                                     />
                                     <Badge dot={this.isPlayerTurn(0)}>
@@ -864,10 +950,12 @@ class Game extends React.Component {
                                     headStyle={player2.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
                                     bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
                                     <Statistic title='Rank' value='1d'></Statistic>
+                                    <Statistic title='Remaining Countdown Chance' value={this.state.countdownLeft2}></Statistic>
                                     {<Countdown
-                                        date={this.state.initialTime2}
+                                        date={this.state.reservedTimeLeft2}
                                         ref={this.setRef2}
                                         autoStart={false}
+                                        onPause={this.countdownPause(2)}
                                         renderer={this.countdownRenderer}
                                     />}
                                     <Badge dot={this.isPlayerTurn(1)}>
