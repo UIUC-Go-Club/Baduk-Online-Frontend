@@ -121,7 +121,7 @@ class App extends React.Component {
                                     </Route>
                                     <Route path="/game" render={props => <Game username={this.state.username} {...props} />}>
                                     </Route>
-                                    <Route path="/profile" render={props => <Profile username={this.state.username} {...props} />}>
+                                    <Route path="/profile" render={props => <Profile cb={this.formSubmit} username={this.state.username} {...props} />}>
                                     </Route>
                                 </Switch>
                             </div>

@@ -1,38 +1,28 @@
 import React from 'react'
 import { socket, server_url } from "./api";
-import { Button, Empty, Descriptions, Collapse, List, Divider } from 'antd';
-import { Link } from 'react-router-dom';
+import { Button, Empty, Descriptions, Collapse, List, Divider, message } from 'antd';
+import { Link, Redirect } from 'react-router-dom';
 
 const { Panel } = Collapse;
 
-const match_data = [
-    {
-        game_id: '1123',
-        opponent: 'Polom'
-    },
-    {
-        game_id: '11',
-        opponent: 'Restful'
-    }
-]
 class Profile extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            name: props.username ? props.username : 'loading',
+            username: props.username ? props.username : 'loading',
             password: '',
             rank: '',
             role: '',
             past_games: [],
             live_games: [],
-            loading: true
+            loading: true,
+            joinedRoom: false,
         }
     }
     componentDidMount() {
-        this.socketListeners();
         if (this.props.location.state) {
             this.setState({
-                name: this.props.location.state.username
+                username: this.props.location.state.username
             })
         }
         this.fetchProfileData();
@@ -40,7 +30,7 @@ class Profile extends React.Component {
 
     fetchProfileData = () => {
         const endpoint = server_url + 'user/';
-        fetch(`${endpoint}/${encodeURIComponent(this.state.name)}`, {
+        fetch(`${endpoint}/${encodeURIComponent(this.state.username)}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -51,7 +41,7 @@ class Profile extends React.Component {
                 console.log('Success:', data);
                 this.setState({ 
                     loading: false,
-                    name: data.username,
+                    username: data.username,
                     email: data.email,
                     password: data.password,
                     rank: data.rank,
@@ -65,19 +55,23 @@ class Profile extends React.Component {
             });
     }
 
-    socketListeners() {
-        socket.on('profile', (data) => {
-            const { name, email, past_games } = data;
-            this.setState({
-                name,
-                email,
-                past_games
-            })
-        })
-    }
+    joinRoom = (room) => () => {
+        const room_id = room;
+        const role = 'player';
+        console.log(`user: ${this.state.username} joined room ${room_id} as ${role}`);
+        if (this.state.username === '') {
+            message.warning('please login')
+            return;
+        }
+        socket.emit('join_room_player', { username: this.state.username, room_id: room_id });
+        this.props.cb(this.props.username, room_id);
+        message.info(`try to join room ${room_id} as ${role}`)
+        this.setState({ joinedRoom: true })
+    } 
 
     render() {
-        if (this.state.name === 'loading') {
+        let {joinedRoom} = this.state;
+        if (this.state.username === 'loading') {
             return (
                 <Empty description={
                     <span>
@@ -88,10 +82,15 @@ class Profile extends React.Component {
                 </Empty>
             )
         }
+        if (joinedRoom) {
+            return (
+                <Redirect push to={{pathname: "/game", state: { username: this.state.username }}} />
+            )
+        }
         return (
             <div>
                 <Descriptions title="Profile" bordered>
-                    <Descriptions.Item label="Username">{this.state.name}</Descriptions.Item>
+                    <Descriptions.Item label="Username">{this.state.username}</Descriptions.Item>
                     <Descriptions.Item label="Rank">{this.state.rank}</Descriptions.Item>
                     <Descriptions.Item label="MatchCount">{this.state.live_games.length+this.state.past_games.length}</Descriptions.Item>
                 </Descriptions>
@@ -103,7 +102,7 @@ class Profile extends React.Component {
                             renderItem={item => (
                                 <List.Item>
                                     Room id: {item.room_id} Between {item.players[0].username} and {item.players[1].username}
-                                    <Button> rejoin</Button>
+                                    <Button onClick={this.joinRoom(item.room_id)}> rejoin</Button>
                                 </List.Item>
                             )}
                         />

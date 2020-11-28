@@ -770,7 +770,6 @@ class Game extends React.Component {
             markLastMove,
             markerMap,
         } = this.state;
-        const self = this;
         if (joinFailed) {
             return (
                 <Redirect push to={{ pathname: "/joinroom", state: { username: myname } }} />
