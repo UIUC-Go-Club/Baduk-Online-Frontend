@@ -14,9 +14,8 @@ import moveSound2 from './data/2.mp3'
 import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
 import { Redirect } from 'react-router';
-import deadstones from '@sabaki/deadstones';
-import { getDeadstones, getProbMap, startMap } from './utils';
-deadstones.useFetch('./node_modules/@sabaki/deadstones/wasm/deadstones_bg.wasm')
+import { startMap, colorToSign } from './utils';
+
 
 // const { Countdown } = Statistic;
 const moveAudio0 = new Audio(moveSound0)
@@ -45,10 +44,6 @@ export function signToColor(sign) {
     }
 }
 
-export function colorToSign(color) {
-    return (color === 'black' ? 1 : -1);
-}
-
 const createTwoWaySwitch = component => ({ stateKey, text, checked }) => {
     return (
         <label>
@@ -74,6 +69,7 @@ class Game extends React.Component {
             markerMap: [],
             dimmedStones: [],
             currColor: 1,
+            currentTurn: 1,
             locked: true,
             end: false,
             boardSize: defaultSize,
@@ -155,19 +151,12 @@ class Game extends React.Component {
         socket.on('move', async (data) => {
             const room = JSON.parse(data);
             console.log(`received move`);
-            if (room.currentBoardSignedMap === JSON.stringify(this.state.board.signMap) && signToColor(this.state.currColor) !== this.state.mycolor) {
-                message.info('Your opponent choose to pass')
+            if (room.lastMove.vertex[0] === -1 && this.getCurrPlayer().username !== this.state.myname) {
+                message.info('Player passed')
             } else {
                 let newBoard = this.state.board.makeMove(room.lastMove.sign, room.lastMove.vertex);
-                let dimmedStones = await deadstones.guess(newBoard.signMap, {
-                    finished: true,
-                    iterations: 100
-                });
-                let probMap = await getProbMap(newBoard.signMap);
                 this.setState({
                     board: newBoard,
-                    dimmedStones: dimmedStones,
-                    probMap: probMap,
                 })
                 if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                     this.setState({
@@ -177,9 +166,12 @@ class Game extends React.Component {
                 }
                 this.playMoveAudio();
             }
-            this.setState({ currColor: this.state.currColor * -1 });
+            // this.setState({ currColor: this.state.currColor * -1 });
+            this.setState({
+                currentTurn: room.currentTurn
+            })
             console.log('color change')
-            if (signToColor(this.state.currColor) === this.state.mycolor && !this.state.isBystander) {
+            if (this.getCurrPlayer().username === this.state.myname && !this.state.isBystander) {
                 this.setState({
                     locked: false
                 })
@@ -216,12 +208,8 @@ class Game extends React.Component {
             })
             if (gameStarted) {
                 const map = JSON.parse(room.currentBoardSignedMap);
-                let dimmedStones = await getDeadstones(map);
-                let probMap = await getProbMap(map);
                 this.setState({
                     board: new Board(map),
-                    dimmedStones: dimmedStones,
-                    probMap: probMap,
                     timeLeft1: players[0].reservedTimeLeft,
                     reservedTimeLeft1: Date.now() + players[0].reservedTimeLeft,
                     countdownLeft1: players[0].countdownLeft,
@@ -287,12 +275,9 @@ class Game extends React.Component {
             })
             if (gameStarted) {
                 const map = JSON.parse(room.currentBoardSignedMap);
-                let dimmedStones = await getDeadstones(map);
-                let probMap = await getProbMap(map);
                 this.setState({
                     board: new Board(map),
-                    dimmedStones: dimmedStones,
-                    probMap: probMap,
+                    currentTurn: room.currentTurn,
                     locked: !(room.players[room.currentTurn].username === this.state.myname) || this.state.isBystander,
                     timeLeft1: players[0].reservedTimeLeft,
                     reservedTimeLeft1: Date.now() + players[0].reservedTimeLeft,
@@ -350,13 +335,14 @@ class Game extends React.Component {
         socket.on('game start', (data) => {
             this.resetBoard();
             const room = JSON.parse(data);
-            let { room_id, players } = room;
+            let { room_id, players, currentTurn } = room;
             this.setState({
                 gameStart: true,
                 room_id: room_id,
                 player1: players[0],
                 player2: players[1],
-                end: false
+                end: false,
+                currentTurn: currentTurn,
             })
             this.setState({
                 timeLeft1: players[0].reservedTimeLeft,
@@ -372,7 +358,7 @@ class Game extends React.Component {
             } else {
                 this.setState({ mycolor: this.state.player2.color })
             }
-            if (this.state.mycolor === 'black' && !this.state.isBystander) {
+            if (this.getCurrPlayer().username === this.state.myname && !this.state.isBystander) {
                 this.setState({
                     locked: false
                 })
@@ -487,16 +473,17 @@ class Game extends React.Component {
                     // no regret 
                     message.error('opponent refused your regret request');
                 } else {
-                    if (room.currentTurn === 0) {
-                        this.setState({
-                            currColor: colorToSign(this.state.player1.color)
-                        })
-                    } else {
-                        this.setState({
-                            currColor: colorToSign(this.state.player2.color)
-                        })
-                    }
+                    // if (room.currentTurn === 0) {
+                    //     this.setState({
+                    //         currColor: colorToSign(this.state.player1.color)
+                    //     })
+                    // } else {
+                    //     this.setState({
+                    //         currColor: colorToSign(this.state.player2.color)
+                    //     })
+                    // }
                     this.setState({
+                        currentTurn: room.currentTurn,
                         board: new Board(JSON.parse(room.currentBoardSignedMap)),
                         locked: !(room.players[room.currentTurn].username === this.state.myname) || this.state.isBystander
                     })
@@ -530,7 +517,9 @@ class Game extends React.Component {
         })
     }
 
-
+    getCurrSign = () => {
+        return colorToSign(this.getCurrPlayer().color) 
+    }
 
     getNextPlayer = () => { }
 
@@ -541,7 +530,7 @@ class Game extends React.Component {
      * @param {*} y coord pair
      */
     mouseClick = (evt, [x, y]) => {
-        let sign = this.state.currColor;
+        let sign = this.getCurrSign();
         if (!this.state.locked && !this.state.end) {
             try {
                 this.state.board.makeMove(sign, [x, y], { preventOverwrite: true, preventKo: true })
@@ -579,26 +568,34 @@ class Game extends React.Component {
     }
 
     /**
-     * reset the board, used for debug purpose, 
-     * shouldn't be exposed in production
-     */
-    resetBoard = () => {
-        let newMap = startMap(defaultSize)
-        this.setState({
-            board: new Board(newMap),
-            currColor: 1,
-            end: false
-        })
-    }
-
-    /**
      * current player choose to pass
      */
     pass = () => {
         this.setState({
             locked: true
         })
-        socket.emit('move', { room_id: this.state.room_id, sign: this.state.currColor, vertex: [-1, -1] })
+        if (this.isPlayerTurn(0)) {
+            this.pauseTimer1();
+            setTimeout(() => {
+                socket.emit('move', { 
+                room_id: this.state.room_id, 
+                sign: this.getCurrSign(), 
+                vertex: [-1, -1], 
+                reservedTimeLeft: this.state.timeLeft1,
+                countdownLeft: this.state.countdownLeft1
+            })}, 100)
+        } else if (this.isPlayerTurn(1)) {
+            this.pauseTimer2();
+            setTimeout(() => {
+                socket.emit('move', { 
+                room_id: this.state.room_id, 
+                sign: this.getCurrSign(), 
+                vertex: [-1, -1], 
+                reservedTimeLeft: this.state.timeLeft2,
+                countdownLeft: this.state.countdownLeft2
+            })}, 100)
+        }
+        // socket.emit('move', { room_id: this.state.room_id, sign: this.getCurrSign(), vertex: [-1, -1] })
         console.log(`you passed`);
         message.info('You passed');
     }
@@ -641,17 +638,6 @@ class Game extends React.Component {
      */
     regret = () => {
         socket.emit('regret init', { room_id: this.state.room_id, username: this.state.myname });
-    }
-
-    /**
-     * player color toString
-     */
-    getPlayer = () => {
-        return (signToColor(this.state.currColor) === this.state.player1.color ? 0 : 1);
-    }
-
-    getMyIndex = () => {
-        return (this.state.myname === this.state.player1.username ? 1 : 0);
     }
 
     /**
@@ -760,11 +746,19 @@ class Game extends React.Component {
      * @param {integer} player the index of player to be checked, 0 or 1
      */
     isPlayerTurn = (player) => {
-        if (player === 0) {
-            return (signToColor(this.state.currColor)) === this.state.player1.color;
-        } else {
-            return (signToColor(this.state.currColor)) === this.state.player2.color;
-        }
+        // if (player === 0) {
+        //     return (signToColor(this.state.currColor)) === this.state.player1.color;
+        // } else {
+        //     return (signToColor(this.state.currColor)) === this.state.player2.color;
+        // }
+        return player === this.state.currentTurn;
+    }
+    
+    /**
+     * return the current player
+     */
+    getCurrPlayer = () => {
+        return this.state.currentTurn === 0 ? this.state.player1 : this.state.player2;
     }
 
     /**
@@ -1071,12 +1065,6 @@ class Game extends React.Component {
                         </Row>
                         <Row>
                             <this.toggleSwitch stateKey={'markLastMove'} text={'mark last move'} checked={false}></this.toggleSwitch>
-                        </Row>
-                        <Row>
-                            <this.toggleSwitch stateKey={'showDimmedStones'} text={'show deadstones'} checked={false}></this.toggleSwitch>
-                        </Row>
-                        <Row>
-                            <this.toggleSwitch stateKey={'showProbMap'} text={'show probability map'} checked={false}></this.toggleSwitch>
                         </Row>
                         <Row>
                             <Col>

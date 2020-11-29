@@ -38,6 +38,9 @@ class GameHall extends React.Component {
         this.fetchRoomData();
     }
 
+    /**
+     * fetch the all active game room data from restful api
+     */
     fetchRoomData = () => {
         const endpoint = server_url + 'room/';
         fetch(`${endpoint}`, {
@@ -59,6 +62,10 @@ class GameHall extends React.Component {
             });
     }
 
+    /**
+     * Handle page redirect when a board is clicked, lead user to target game room
+     * @param {String} room_id 
+     */
     roomLinkClick = (room_id) => () => {
         const role = 'player';
         console.log(`user: ${this.state.username} joined room ${room_id} as ${role}`);
@@ -81,12 +88,14 @@ class GameHall extends React.Component {
         const { loading, roomJoined, gameRooms, } = this.state;
         const gameRoomLists = gameRooms.map((room) => (
             <Popover 
+                key={room.room_id}
                 title={`Room id: ${room.room_id}`} 
                 content={roomText(room)}>
                 <TouchableOpacity key={room.room_id} onPress={this.roomLinkClick(room.room_id)} >
                     <Goban vertexSize={13}
-                        signMap={room.pastMoves.length === 0 ? startMap(room.boardSize) : getCurrentBoard(room.pastMoves, room.boardSize)}
-                        showCoordinates={false} />
+                        signMap={room.pastMoves.length === 0 ? startMap(room.boardSize) : getCurrentBoard(room.pastMoves, room.boardSize, room.pastMoves.length)}
+                        showCoordinates={false} 
+                        style={{marginRight: 10, marginBottom: 10, flexWrap: 'wrap'}}/>
                 </TouchableOpacity>
             </Popover>
             )
@@ -108,7 +117,7 @@ class GameHall extends React.Component {
             )
         }
         return (
-            <View style={{ flex: 1, flexDirection: 'row' }}>
+            <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
                 {gameRoomLists}
             </View>
         );
