@@ -20,6 +20,7 @@ import Profile from './profile'
 import SignIn from './signinpage';
 import RoomJoin from './roomjoin';
 import Signup from './signup';
+import GameHall from './gamehall';
 
 
 
@@ -74,6 +75,11 @@ class App extends React.Component {
                                     Home
                                 </Link>
                             </Menu.Item>
+                            <Menu.Item key="signin" icon={<SolutionOutlined />}>
+                                <Link to='signin'>
+                                    Signin
+                                </Link>
+                            </Menu.Item>
                             <Menu.Item key="signup" icon={<SolutionOutlined />}>
                                 <Link to='signup'>
                                     Signup
@@ -112,17 +118,12 @@ class App extends React.Component {
                         <Content>
                             <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
                                 <Switch>
-                                    <Route exact path="/" >
-                                        <SignIn cb={this.loginSubmit} />
-                                    </Route>
-                                    <Route path="/joinroom" render={props => <RoomJoin cb={this.formSubmit} username={this.state.username} {...props} />}>
-                                    </Route>
-                                    <Route path="/signup" render={props => <Signup cb={this.formSubmit} {...props} />}>
-                                    </Route>
-                                    <Route path="/game" render={props => <Game username={this.state.username} {...props} />}>
-                                    </Route>
-                                    <Route path="/profile" render={props => <Profile cb={this.formSubmit} username={this.state.username} {...props} />}>
-                                    </Route>
+                                    <Route exact path="/" render={props => <GameHall cb={this.formSubmit} username={this.state.username} {...props} />} />
+                                    <Route path="/signin" render={props => <SignIn cb={this.formSubmit} {...props} />}></Route>
+                                    <Route path="/joinroom" render={props => <RoomJoin cb={this.formSubmit} username={this.state.username} {...props} />} />
+                                    <Route path="/signup" render={props => <Signup cb={this.formSubmit} {...props} />} />
+                                    <Route path="/game" render={props => <Game username={this.state.username} {...props} />} />
+                                    <Route path="/profile" render={props => <Profile cb={this.formSubmit} username={this.state.username} {...props} />} />
                                 </Switch>
                             </div>
                         </Content>

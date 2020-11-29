@@ -78,7 +78,7 @@ class Profile extends React.Component {
                         Please login to view your profile
                     </span>
                 }>
-                    <Link to=''><Button type="primary">Login Now</Button></Link>
+                    <Link to='/signin'><Button type="primary">Login Now</Button></Link>
                 </Empty>
             )
         }
