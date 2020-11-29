@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button, Col, message, Empty, Card, Statistic, Popover } from 'antd';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { Button, message, Empty, Popover } from 'antd';
+import { TouchableOpacity, View } from 'react-native';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import '@sabaki/go-board';
@@ -15,6 +15,10 @@ const roomText = (room) => (
     </div>
 )
 
+/**
+ * @param cb callback function used to update parent's username
+ * Game Hall Screen, used to show all active games
+ */
 class GameHall extends React.Component {
     constructor(props) {
         super(props);

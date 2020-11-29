@@ -348,8 +348,6 @@ class Game extends React.Component {
                 countdownLeft1: players[0].countdownLeft,
                 countdownLeft2: players[1].countdownLeft,
             })
-            // this.totalTime1 = Date.now() + players[0].reservedTimeLeft;
-            // this.totalTime2 = Date.now() + players[1].reservedTimeLeft;
 
             if (this.state.myname === this.state.player1.username) {
                 this.setState({ mycolor: this.state.player1.color })
@@ -620,16 +618,17 @@ class Game extends React.Component {
         return (this.state.locked)
     }
 
-    restartTimer = (startTime) => {
-        return (Date.now() + startTime)
-    }
-
+    /**
+     * initiate request to start a new game 
+     */
     gameStart = () => {
         socket.emit('game start init', { username: this.state.myname, room_id: this.state.room_id });
     }
 
-    regretHandleCancel = component => {
-        console.log(component);
+    /**
+     * used when regret request is denied
+     */
+    regretHandleCancel = () => {
         this.setState({
             regretModalVisible: false,
         });
@@ -640,8 +639,10 @@ class Game extends React.Component {
         })
     };
 
-    regretHandleOk = component => {
-        console.log(component);
+    /**
+     * used when regret request is accepted
+     */
+    regretHandleOk = () => {
         this.setState({
             regretModalVisible: false
         });
@@ -652,53 +653,69 @@ class Game extends React.Component {
         })
     }
 
-    countHandleOk = component => {
-        console.log(component);
+    /**
+     * used when count territory request is accepted
+     */
+    countHandleOk = () => {
         this.setState({
             scoreModalVisible: false
         })
         socket.emit('game end init', { room_id: this.state.room_id, username: this.state.myname });
     }
 
-    countHandleCancel = component => {
-        console.log(component);
+    /**
+     * used when count territory request is denied
+     */
+    countHandleCancel = () => {
         this.setState({
             scoreModalVisible: false
         })
     }
 
-    gameEndHandleOk = component => {
-        console.log(component);
+    /**
+     * used when game end request is accepted
+     */
+    gameEndHandleOk = () => {
         this.setState({
             gameEndModalVisible: false
         })
         socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, answer: true });
     }
 
-    gameEndHandleCancel = component => {
-        console.log(component);
+    /**
+     * used when game end request is denied
+     */
+    gameEndHandleCancel = () => {
         this.setState({
             gameEndModalVisible: false
         })
         socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, answer: false })
     }
 
-    gameStartHandleOk = component => {
-        console.log(component);
+    /**
+     * used when game start request is accepted
+     */
+    gameStartHandleOk = () => {
         this.setState({
             gameStartModalVisible: false
         })
         socket.emit('game start response', { room_id: this.state.room_id, username: this.state.myname, answer: true });
     }
 
-    gameStartHandleCancel = component => {
-        console.log(component);
+    /**
+     * used when game start request is denied
+     */
+    gameStartHandleCancel = () => {
         this.setState({
             gameStartModalVisible: false
         })
         socket.emit('game start response', { room_id: this.state.room_id, username: this.state.myname, answer: false })
     }
 
+    /**
+     * check if it is currently this player's turn
+     * @param {integer} player the index of player to be checked, 0 or 1
+     */
     isPlayerTurn = (player) => {
         if (player === 0) {
             return (signToColor(this.state.currColor)) === this.state.player1.color;
@@ -707,39 +724,58 @@ class Game extends React.Component {
         }
     }
 
+    /**
+     * used to send message to the room
+     * @param {string} message message to be sent
+     */
     sendMessage = (message) => {
         const { myname } = this.state;
         socket.emit('new message', { username: myname, message: message, })
     }
 
+    /**
+     * start timer of player1
+     */
     startTimer1 = () => {
         // console.log('timer1 start');
         this.countdownApi1 && this.countdownApi1.start();
     }
 
+    /**
+     * start timer of player2
+     */
     startTimer2 = () => {
         // console.log('timer2 start');
         this.countdownApi2 && this.countdownApi2.start();
     }
 
-    handleUpdate = () => {
-        this.forceUpdate();
-    };
-
+    /**
+     * pause timer of player1
+     */
     pauseTimer1 = () => {
         // console.log('timer1 pause');
         this.countdownApi1 && this.countdownApi1.pause();
     };
 
+    /**
+     * pause timer of player2
+     */
     pauseTimer2 = () => {
         // console.log('timer2 pause');
         this.countdownApi2 && this.countdownApi2.pause();
     };
 
+    /**
+     * custom renderer for Countdown component
+     */
     countdownRenderer = ({ hours, minutes, seconds }) => (
         <Statistic title='Remaining Time' value={`${zeroPad(hours)}:${zeroPad(minutes)}:${zeroPad(seconds)}`} />
     );
 
+    /**
+     * callback function for Countdown onPause, pause the countdown
+     * @param {integer} timerNo 
+     */
     countdownPause = (timerNo) => ({total}) => {
         this.setState(() => ({
             ['timeLeft' + timerNo] : total

@@ -3,7 +3,7 @@ import { Form, Input, Button, Col, message } from 'antd';
 import { DesktopOutlined, UserOutlined, EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
 
 import { Redirect } from 'react-router-dom';
-import { socket, server_url } from "./api";
+import { server_url } from "./api";
 
 const layout = {
     labelCol: {
@@ -43,7 +43,6 @@ class SignIn extends React.Component {
         const username = values.username;
         const password = values.password;
         console.log(`login with username: ${username} and password: ${password}`);
-        // socket.emit('join_room_player', { username: nickname, room_id : room });
         const endpoint = server_url + 'auth/login';
         const loginData = {
             username: username,
