@@ -2,9 +2,9 @@ import React from 'react'
 import PropTypes from 'prop-types';
 import ChatMesssage from './chatMessage';
 import { List, Comment, Input } from 'antd'
+import { FormInstance } from 'antd/lib/form';
 import { socket } from "../api";
-
-const { Search } = Input;
+import Form from 'antd/lib/form/Form';
 
 class Chatbox extends React.Component {
     constructor(props) {
@@ -12,15 +12,21 @@ class Chatbox extends React.Component {
         this.username = props.username;
         this.room_id = props.room_id;
     }
+    formRef = React.createRef();
 
+    /**
+     * Send chat message entered to backend
+     * @param {Form Object} data data from search box used as chatbox
+     */
     sendChat = data => {
         let message = {
             room_id: this.room_id,
             username: this.username,
-            message: data,
+            message: data.message,
             sentTime: Date.now()
         }
         socket.emit("new message", message);
+        this.formRef.current.resetFields();
     }
 
     render() {
@@ -41,11 +47,15 @@ class Chatbox extends React.Component {
                         </li>
                     )}
                 />
-                <Search
-                    allowClear
-                    enterButton="Send"
-                    onSearch={this.sendChat}
-                />
+                <Form ref={this.formRef} onFinish={this.sendChat}>
+                    <Form.Item
+                        name='message'
+                        rules={[{required: true,}]}
+                    >
+                        <Input/>
+                    </Form.Item>
+                </Form>
+                
             </div>
         )
     }
