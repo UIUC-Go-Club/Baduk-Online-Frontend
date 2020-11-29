@@ -2,7 +2,6 @@ import React from 'react';
 import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
-import '@sabaki/go-board';
 import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton, List } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import Countdown, { zeroPad } from 'react-countdown';
@@ -15,6 +14,9 @@ import moveSound2 from './data/2.mp3'
 import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
 import { Redirect } from 'react-router';
+import deadstones from '@sabaki/deadstones';
+import { getDeadstones, getProbMap, startMap } from './utils';
+deadstones.useFetch('./node_modules/@sabaki/deadstones/wasm/deadstones_bg.wasm')
 
 // const { Countdown } = Statistic;
 const moveAudio0 = new Audio(moveSound0)
@@ -24,10 +26,6 @@ const moveAudio3 = new Audio(moveSound3)
 const moveAudio4 = new Audio(moveSound4)
 const moveAudios = [moveAudio0, moveAudio1, moveAudio2, moveAudio2, moveAudio3, moveAudio4]
 const defaultSize = 19
-
-export function startMap(size) {
-    return new Array(size).fill(0).map(() => new Array(size).fill(0));
-}
 
 export function generateMarkerMap(size, vertex) {
     let O = { type: 'circle' };
@@ -72,6 +70,9 @@ class Game extends React.Component {
             joinFailed: false,
             gameStart: false,
             board: new Board(startMap(defaultSize)),
+            probMap: [],
+            markerMap: [],
+            dimmedStones: [],
             currColor: 1,
             locked: true,
             end: false,
@@ -103,6 +104,8 @@ class Game extends React.Component {
             countdownLeft1: 3,
             countdownLeft2: 3,
             markLastMove: false,
+            showDimmedStones: false,
+            showProbMap: false,
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
@@ -149,15 +152,22 @@ class Game extends React.Component {
         })
         socket.on('connect', () => { console.log(socket.id) });
         // receive uptated board from server
-        socket.on('move', (data) => {
+        socket.on('move', async (data) => {
             const room = JSON.parse(data);
             console.log(`received move`);
             if (room.currentBoardSignedMap === JSON.stringify(this.state.board.signMap) && signToColor(this.state.currColor) !== this.state.mycolor) {
                 message.info('Your opponent choose to pass')
             } else {
                 let newBoard = this.state.board.makeMove(room.lastMove.sign, room.lastMove.vertex);
+                let dimmedStones = await deadstones.guess(newBoard.signMap, {
+                    finished: true,
+                    iterations: 100
+                });
+                let probMap = await getProbMap(newBoard.signMap);
                 this.setState({
                     board: newBoard,
+                    dimmedStones: dimmedStones,
+                    probMap: probMap,
                 })
                 if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                     this.setState({
@@ -195,7 +205,7 @@ class Game extends React.Component {
             this.setState({ myname: username });
         })
 
-        socket.on('room bystander change', (data) => {
+        socket.on('room bystander change', async (data) => {
             console.log('room bystander change');
             const room = JSON.parse(data);
             let { room_id, players, gameStarted, bystanders } = room;
@@ -206,8 +216,12 @@ class Game extends React.Component {
             })
             if (gameStarted) {
                 const map = JSON.parse(room.currentBoardSignedMap);
+                let dimmedStones = await getDeadstones(map);
+                let probMap = await getProbMap(map);
                 this.setState({
                     board: new Board(map),
+                    dimmedStones: dimmedStones,
+                    probMap: probMap,
                     timeLeft1: players[0].reservedTimeLeft,
                     reservedTimeLeft1: Date.now() + players[0].reservedTimeLeft,
                     countdownLeft1: players[0].countdownLeft,
@@ -262,7 +276,7 @@ class Game extends React.Component {
                 });
         })
 
-        socket.on('room player change', (data) => {
+        socket.on('room player change', async (data) => {
             console.log('room player change');
             const room = JSON.parse(data);
             let { room_id, players, gameStarted, bystanders } = room;
@@ -273,8 +287,12 @@ class Game extends React.Component {
             })
             if (gameStarted) {
                 const map = JSON.parse(room.currentBoardSignedMap);
+                let dimmedStones = await getDeadstones(map);
+                let probMap = await getProbMap(map);
                 this.setState({
                     board: new Board(map),
+                    dimmedStones: dimmedStones,
+                    probMap: probMap,
                     locked: !(room.players[room.currentTurn].username === this.state.myname) || this.state.isBystander,
                     timeLeft1: players[0].reservedTimeLeft,
                     reservedTimeLeft1: Date.now() + players[0].reservedTimeLeft,
@@ -573,6 +591,9 @@ class Game extends React.Component {
         })
     }
 
+    /**
+     * current player choose to pass
+     */
     pass = () => {
         this.setState({
             locked: true
@@ -582,6 +603,9 @@ class Game extends React.Component {
         message.info('You passed');
     }
 
+    /**
+     * current player wish to resign
+     */
     resign = () => {
         this.setState({
             end: true,
@@ -592,10 +616,29 @@ class Game extends React.Component {
         console.log(`you resigned`);
     }
 
+    /**
+     * current player runout of alloted time
+     */
+    playerTimeout = () => {
+        this.setState({
+            end: true,
+            gameStart: false,
+        })
+        socket.emit('timeout', { room_id: this.state.room_id, username: this.state.myname });
+        message.error('You time run out');
+        console.log(`you timed out`);
+    }
+
+    /**
+     * current player initiate a count territory request
+     */
     calcScore = () => {
         socket.emit('calc score', { room_id: this.state.room_id });
     }
 
+    /**
+     * current player initiate a regret request
+     */
     regret = () => {
         socket.emit('regret init', { room_id: this.state.room_id, username: this.state.myname });
     }
@@ -805,6 +848,10 @@ class Game extends React.Component {
             isBystander,
             markLastMove,
             markerMap,
+            dimmedStones,
+            probMap,
+            showDimmedStones,
+            showProbMap,
         } = this.state;
         if (joinFailed) {
             return (
@@ -838,7 +885,7 @@ class Game extends React.Component {
                                 showCoordinates={showCoordinates}
                                 fuzzyStonePlacement={realisticPlacement}
                                 animateStonePlacement={animated}
-                                onVertexMouseUp={this.mouseClick} />
+                                onVertexMouseUp={this.mouseClick}/>
                         </Col>
                         <Col flex='100px'></Col>
                         <Col flex='auto'>
@@ -951,6 +998,8 @@ class Game extends React.Component {
                         <Goban vertexSize={30}
                             signMap={board.signMap}
                             markerMap={markLastMove && markerMap}
+                            paintMap={showProbMap && probMap}
+                            dimmedStones={showDimmedStones ? dimmedStones : []}
                             showCoordinates={showCoordinates}
                             fuzzyStonePlacement={realisticPlacement}
                             animateStonePlacement={animated}
@@ -1022,6 +1071,12 @@ class Game extends React.Component {
                         </Row>
                         <Row>
                             <this.toggleSwitch stateKey={'markLastMove'} text={'mark last move'} checked={false}></this.toggleSwitch>
+                        </Row>
+                        <Row>
+                            <this.toggleSwitch stateKey={'showDimmedStones'} text={'show deadstones'} checked={false}></this.toggleSwitch>
+                        </Row>
+                        <Row>
+                            <this.toggleSwitch stateKey={'showProbMap'} text={'show probability map'} checked={false}></this.toggleSwitch>
                         </Row>
                         <Row>
                             <Col>

@@ -3,10 +3,9 @@ import { Button, message, Empty, Popover } from 'antd';
 import { TouchableOpacity, View } from 'react-native';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
-import '@sabaki/go-board';
 import { Link, Redirect } from 'react-router-dom';
 import { socket, server_url } from "./api";
-import { startMap } from './game'
+import { startMap, getCurrentBoard } from './utils'
 
 const roomText = (room) => (
     <div>
@@ -80,16 +79,17 @@ class GameHall extends React.Component {
 
     render() {
         const { loading, roomJoined, gameRooms, } = this.state;
-        const gameRoomLists = gameRooms.map((room) =>
+        const gameRoomLists = gameRooms.map((room) => (
             <Popover 
                 title={`Room id: ${room.room_id}`} 
                 content={roomText(room)}>
                 <TouchableOpacity key={room.room_id} onPress={this.roomLinkClick(room.room_id)} >
                     <Goban vertexSize={13}
-                        signMap={room.currentBoardSignedMap ? room.currentBoardSignedMap : startMap(room.boardSize)}
+                        signMap={room.pastMoves.length === 0 ? startMap(room.boardSize) : getCurrentBoard(room.pastMoves, room.boardSize)}
                         showCoordinates={false} />
                 </TouchableOpacity>
             </Popover>
+            )
         );
         if (loading) {
             return (
