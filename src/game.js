@@ -68,7 +68,6 @@ class Game extends React.Component {
             probMap: [],
             markerMap: [],
             dimmedStones: [],
-            currColor: 1,
             currentTurn: 1,
             locked: true,
             end: false,
@@ -105,9 +104,6 @@ class Game extends React.Component {
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
-
-    // countdownApi1 = null;
-    // countdownApi2 = null;
 
     setRef1 = (countdown) => {
         if (countdown) {
@@ -166,7 +162,6 @@ class Game extends React.Component {
                 }
                 this.playMoveAudio();
             }
-            // this.setState({ currColor: this.state.currColor * -1 });
             this.setState({
                 currentTurn: room.currentTurn
             })
@@ -473,15 +468,6 @@ class Game extends React.Component {
                     // no regret 
                     message.error('opponent refused your regret request');
                 } else {
-                    // if (room.currentTurn === 0) {
-                    //     this.setState({
-                    //         currColor: colorToSign(this.state.player1.color)
-                    //     })
-                    // } else {
-                    //     this.setState({
-                    //         currColor: colorToSign(this.state.player2.color)
-                    //     })
-                    // }
                     this.setState({
                         currentTurn: room.currentTurn,
                         board: new Board(JSON.parse(room.currentBoardSignedMap)),
@@ -509,11 +495,6 @@ class Game extends React.Component {
 
         socket.on('debug', (debug_message) => {
             message.error(debug_message);
-            // if (debug_message === 'join failed because there are already 2 players, jion as bystander instead') {
-            //     this.setState({
-            //         joinFailed: true,
-            //     })
-            // }
         })
     }
 
@@ -529,7 +510,6 @@ class Game extends React.Component {
         let newMap = startMap(defaultSize)
         this.setState({
             board: new Board(newMap),
-            currColor: 1,
             end: false
         })
     }
@@ -757,11 +737,6 @@ class Game extends React.Component {
      * @param {integer} player the index of player to be checked, 0 or 1
      */
     isPlayerTurn = (player) => {
-        // if (player === 0) {
-        //     return (signToColor(this.state.currColor)) === this.state.player1.color;
-        // } else {
-        //     return (signToColor(this.state.currColor)) === this.state.player2.color;
-        // }
         return player === this.state.currentTurn;
     }
     
