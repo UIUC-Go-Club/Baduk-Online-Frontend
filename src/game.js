@@ -521,7 +521,18 @@ class Game extends React.Component {
         return colorToSign(this.getCurrPlayer().color) 
     }
 
-    getNextPlayer = () => { }
+    /**
+     * reset the board, used for debug purpose, 
+     * shouldn't be exposed in production
+     */
+    resetBoard = () => {
+        let newMap = startMap(defaultSize)
+        this.setState({
+            board: new Board(newMap),
+            currColor: 1,
+            end: false
+        })
+    }
 
     /**
      * used when mouse clicked on board, used by Board's onVertexMouseUp
