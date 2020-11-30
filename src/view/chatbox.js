@@ -40,7 +40,7 @@ class Chatbox extends React.Component {
                     style={{ height: 300 }}
                 >
                     {chats.map(({ username, message, timeSent, disabled }, index) => (
-                        <List.Item key={message} index={index} disabled={disabled}>
+                        <List.Item key={index} index={index} disabled={disabled}>
                             {username} : {message}
                         </List.Item>
                     ))}
