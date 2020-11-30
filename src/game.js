@@ -534,7 +534,7 @@ class Game extends React.Component {
                         ${winnerNote}`,
                     duration: 20,
                     style: {
-                        'white-space': 'pre-line'
+                        'whiteSpace': 'pre-line'
                     }
                 }
                 notification.open(result);

@@ -2,6 +2,7 @@ import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import Board from '@sabaki/go-board';
 import { Button, Col, Empty, notification, Row, Timeline } from 'antd';
+import { Scrollbars } from 'react-custom-scrollbars';
 import React from 'react'
 import { Link } from 'react-router-dom';
 import { server_url } from "./api";
@@ -43,7 +44,7 @@ class GameReview extends React.Component {
                 game_id: this.props.location.state.id
             }, this.fetchRoomData);
         }
-        
+
     }
 
     /**
@@ -69,7 +70,7 @@ class GameReview extends React.Component {
                             loading: false,
                             allMoves: pastMoves,
                             board: new Board(getCurrentBoard(pastMoves, game.boardSize, pastMoves.length)),
-                            sign: pastMoves.length === 0 ? 1 : pastMoves[pastMoves.length-1].sign,
+                            sign: pastMoves.length === 0 ? 1 : pastMoves[pastMoves.length - 1].sign,
                             scoreResult: game.scoreResult,
                             player1: game.players[0],
                             player2: game.players[1],
@@ -93,25 +94,25 @@ class GameReview extends React.Component {
         const newBoard = new Board(newSignmap)
         this.setState({
             board: newBoard,
-            sign: this.state.allMoves[index-1].sign,
+            sign: this.state.allMoves[index - 1].sign,
         })
     }
 
     mouseClick = (evt, [x, y]) => {
         let sign = this.state.sign * -1;
-            try {
-                const newBoard = this.state.board.makeMove(sign, [x, y], { preventOverwrite: true, preventSuicide: true, preventKo: true })
-                this.setState({
-                    board: newBoard,
-                    sign: sign,
-                    lastMove: {vertex: [x,y], sign: sign},
-                    markerMap: generateMarkerMap(this.state.boardSize, [x,y]),
-                    showDimmedStones: false,
-                    showInfluenceMap: false,
-                })
-            } catch (e) {
-                console.error(e);
-            }
+        try {
+            const newBoard = this.state.board.makeMove(sign, [x, y], { preventOverwrite: true, preventSuicide: true, preventKo: true })
+            this.setState({
+                board: newBoard,
+                sign: sign,
+                lastMove: { vertex: [x, y], sign: sign },
+                markerMap: generateMarkerMap(this.state.boardSize, [x, y]),
+                showDimmedStones: false,
+                showInfluenceMap: false,
+            })
+        } catch (e) {
+            console.error(e);
+        }
 
     }
 
@@ -157,7 +158,7 @@ class GameReview extends React.Component {
                 }
                 const result = {
                     message: 'Current Score',
-                    description: 
+                    description:
                         `Black have ${data.scoreResult.territory[0]} territories \n 
                         white have ${data.scoreResult.territory[1]} territories \n
                         ${winnerNote}`,
@@ -218,25 +219,27 @@ class GameReview extends React.Component {
                             paintMap={showInfluenceMap && influenceMap}
                             dimmedStones={showDimmedStones ? dimmedStones : []}
                             showCoordinates={showCoordinates}
-                            onVertexMouseUp={this.mouseClick} 
-                            style={{marginRight: 20, marginBottom: 20, flexWrap: 'wrap'}} />
+                            onVertexMouseUp={this.mouseClick}
+                            style={{ marginRight: 20, marginBottom: 20, flexWrap: 'wrap' }} />
                     </Col>
-                    <Col flex='auto'>
-                        <Timeline>
-                            {allMoves.map(({ vertex, sign }, index) => (
-                                <div key={index} onClick={this.handleTreeClick(index+1)}>
-                                    <Timeline.Item key={index} >
-                                        Move {index} : {vertexToString(vertex)} by {signToColor(sign)}
-                                    </Timeline.Item>
-                                </div>
-                            ))}
-                        </Timeline>
+                    <Col flex='200px'>
+                        <Scrollbars style={{ width: 200, height: 650 }}>
+                            <Timeline>
+                                {allMoves.map(({ vertex, sign }, index) => (
+                                    <div key={index} onClick={this.handleTreeClick(index + 1)}>
+                                        <Timeline.Item key={index} >
+                                            Move {index} : {vertexToString(vertex)} by {signToColor(sign)}
+                                        </Timeline.Item>
+                                    </div>
+                                ))}
+                            </Timeline>
+                        </Scrollbars>
                     </Col>
                 </Row>
                 <Row>
-                <Col>
-                                <Button onClick={this.showAnalysis}>Show Analysis</Button>
-                            </Col>
+                    <Col>
+                        <Button onClick={this.showAnalysis}>Show Analysis</Button>
+                    </Col>
                 </Row>
             </div>
         )
