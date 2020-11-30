@@ -2,7 +2,7 @@ import React from 'react';
 import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
-import { Button, Switch, Row, Col, Card, Popconfirm, message, notification, Statistic, Modal, Badge, Skeleton, List } from 'antd';
+import { Button, Switch, Row, Col, Card, Popconfirm, Select, message, notification, Statistic, Modal, Badge, Skeleton, List, Form, Input } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import Countdown, { zeroPad } from 'react-countdown';
 import { socket, server_url } from "./api";
@@ -14,10 +14,11 @@ import moveSound2 from './data/2.mp3'
 import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
 import { Redirect } from 'react-router';
-import { startMap, colorToSign, generateMarkerMap } from './utils';
+import { startMap, colorToSign, generateMarkerMap, minToMS } from './utils';
 
 
 // const { Countdown } = Statistic;
+const { Option } = Select;
 const moveAudio0 = new Audio(moveSound0)
 const moveAudio1 = new Audio(moveSound1)
 const moveAudio2 = new Audio(moveSound2)
@@ -70,7 +71,7 @@ class Game extends React.Component {
             scoreModalVisible: false,
             regretModalVisible: false,
             gameEndModalVisible: false,
-            gameStartModalVisible: false,
+            gameStartResponseModalVisible: false,
             chats: [],
             bystanders: [],
             isBystander: false,
@@ -86,6 +87,8 @@ class Game extends React.Component {
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
+
+    formRef = React.createRef();
 
     setRef1 = (countdown) => {
         if (countdown) {
@@ -179,11 +182,18 @@ class Game extends React.Component {
         socket.on('room bystander change', async (data) => {
             console.log('room bystander change');
             const room = JSON.parse(data);
-            let { room_id, players, gameStarted, bystanders } = room;
+            let { room_id, players, gameStarted, bystanders, boardSize, handicap, komi, countdown, countdownTime, reservedTime, randomPlayerColor } = room;
             this.setState({
                 room_id: room_id,
                 gameStart: gameStarted,
                 bystanders: bystanders,
+                komi: komi,
+                boardSize: boardSize,
+                handicap: handicap,
+                countdownChance: countdown,
+                countdownTime: countdownTime,
+                reservedTime: reservedTime,
+                randomPlayerColor: randomPlayerColor,
             })
             if (gameStarted) {
                 const map = JSON.parse(room.currentBoardSignedMap);
@@ -246,11 +256,19 @@ class Game extends React.Component {
         socket.on('room player change', async (data) => {
             console.log('room player change');
             const room = JSON.parse(data);
-            let { room_id, players, gameStarted, bystanders } = room;
+            console.log(room)
+            let { room_id, players, gameStarted, bystanders, boardSize, handicap, komi, countdown, countdownTime, reservedTime, randomPlayerColor } = room;
             this.setState({
                 room_id: room_id,
                 gameStart: gameStarted,
                 bystanders: bystanders,
+                komi: komi,
+                boardSize: boardSize,
+                handicap: handicap,
+                countdownChance: countdown,
+                countdownTime: countdownTime,
+                reservedTime: reservedTime,
+                randomPlayerColor: randomPlayerColor,
             })
             if (gameStarted) {
                 const map = JSON.parse(room.currentBoardSignedMap);
@@ -271,6 +289,10 @@ class Game extends React.Component {
                         markerMap: generateMarkerMap(this.state.boardSize, room.lastMove.vertex)
                     })
                 }
+            } else {
+                this.setState({
+                    board: new Board(startMap(room.boardSize)),
+                })
             }
             if (players[0]) {
                 this.setState({
@@ -312,7 +334,7 @@ class Game extends React.Component {
         })
 
         socket.on('game start', (data) => {
-            this.resetBoard();
+            // this.resetBoard();
             const room = JSON.parse(data);
             let { room_id, players, currentTurn } = room;
             this.setState({
@@ -332,6 +354,12 @@ class Game extends React.Component {
                 reservedTimeLeft2: Date.now() + players[1].reservedTimeLeft,
                 countdownLeft1: players[0].countdownLeft,
                 countdownLeft2: players[1].countdownLeft,
+                countdownTime: room.countdownTime,
+                komi: room.komi,
+                handicap: room.handicap,
+                randomPlayerColor: room.randomPlayerColor,
+                boardSize: room.boardSize,
+                board: new Board(startMap(room.boardSize)),
             })
 
             if (this.state.myname === this.state.player1.username) {
@@ -354,7 +382,7 @@ class Game extends React.Component {
         socket.on('game start init', () => {
             if (!this.state.isBystander) {
                 this.setState({
-                    gameStartModalVisible: true
+                    gameStartResponseModalVisible: true
                 })
             }
         })
@@ -528,7 +556,7 @@ class Game extends React.Component {
                 }
                 const result = {
                     message: 'Current Score',
-                    description: 
+                    description:
                         `Black have ${data.scoreResult.territory[0]} territories \n 
                         white have ${data.scoreResult.territory[1]} territories \n
                         ${winnerNote}`,
@@ -692,11 +720,53 @@ class Game extends React.Component {
         return (this.state.locked)
     }
 
-    /**
-     * initiate request to start a new game 
-     */
     gameStart = () => {
-        socket.emit('game start init', { username: this.state.myname, room_id: this.state.room_id });
+        this.setState({
+            gameStartInitModalVisible: true
+        })
+    }
+
+    /**
+     * game start init settings confirmed, send to server
+     */
+    gameStartConfirm = (value) => {
+        const { myname, room_id } = this.state;
+        const { boardSize, handicap, komi, countdownChance, countdownTime, reservedTime, playerColor } = value;
+        let randomPlayerColor;
+        if (playerColor === 'random') {
+            randomPlayerColor = true;
+        } else {
+            randomPlayerColor = false;
+        }
+        const otherColor = playerColor === 'black' ? 'white' : 'black';
+        const otherName = this.state.player1.username === myname ? this.state.player2.username : this.state.player1.username;
+        const gameStartSetting = {
+            username: myname,
+            room_id: room_id,
+            boardSize,
+            handicap,
+            komi,
+            countdown : countdownChance,
+            countdownTime,
+            reservedTime,
+            randomPlayerColor,
+            [myname]: { color: playerColor},
+            [otherName]: {color: otherColor},
+        }
+        console.log(gameStartSetting)
+        socket.emit('game start init', gameStartSetting);
+        this.setState({
+            gameStartInitModalVisible: false
+        })
+    }
+
+    /**
+     * game start init canceled
+     */
+    gameStartCancel = () => {
+        this.setState({
+            gameStartInitModalVisible: false
+        })
     }
 
     /**
@@ -771,7 +841,7 @@ class Game extends React.Component {
      */
     gameStartHandleOk = () => {
         this.setState({
-            gameStartModalVisible: false
+            gameStartResponseModalVisible: false
         })
         socket.emit('game start response', { room_id: this.state.room_id, username: this.state.myname, answer: true });
     }
@@ -781,7 +851,7 @@ class Game extends React.Component {
      */
     gameStartHandleCancel = () => {
         this.setState({
-            gameStartModalVisible: false
+            gameStartResponseModalVisible: false
         })
         socket.emit('game start response', { room_id: this.state.room_id, username: this.state.myname, answer: false })
     }
@@ -892,25 +962,124 @@ class Game extends React.Component {
                 <Redirect push to={{ pathname: "/joinroom", state: { username: myname } }} />
             );
         }
+        const gameStartInitModal = (
+            <Modal
+                title="Game Start Request"
+                visible={this.state.gameStartInitModalVisible}
+                // onOk={this.formRef.current.submit}
+                onCancel={this.gameStartCancel}
+                footer={[
+                    <Button key="Refuse" onClick={this.gameStartCancel}>
+                        Cancel
+                    </Button>,
+                    <Button form="game_start_form" key="Accept" type="primary" htmlType="submit">
+                        Start Game
+                    </Button>,
+                ]}
+            >
+                <Form id='game_start_form'
+                onFinish={this.gameStartConfirm}
+                initialValues={{
+                    boardSize: this.state.boardSize,
+                    handicap: this.state.handicap,
+                    komi: this.state.komi,
+                    reservedTime: this.state.reservedTime,
+                    countdownChance: this.state.countdownChance,
+                    countdownTime: this.state.countdownTime,
+                    playerColor: 'random'
+                }}
+                ref={this.formRef}>
+                    <Form.Item
+                        name='boardSize'
+                        label='Board Size'
+                    >
+                        <Select>
+                            <Option value={9}>9</Option>
+                            <Option value={13}>13</Option>
+                            <Option value={19}>19</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name='handicap'
+                        label='Handicap'
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item
+                        name='komi'
+                        label='Komi'
+                    >
+                        <Select>
+                            <Option value={6.5}>6.5</Option>
+                            <Option value={7.5}>7.5</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name='reservedTime'
+                        label='Reserved Time'
+                    >
+                        <Select>
+                            <Option value={minToMS(1)}> 1 minute</Option>
+                            <Option value={minToMS(10)}>10 minutes</Option>
+                            <Option value={minToMS(20)}>20 minutes</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name='countdownChance'
+                        label='Countdown Chance'
+                    >
+                        <Select>
+                            <Option value={1}>1</Option>
+                            <Option value={3}>3</Option>
+                            <Option value={5}>5</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name='countdownTime'
+                        label='Countdown Time'
+                    >
+                        <Select>
+                            <Option value={minToMS(0.5)}> 30 seconds</Option>
+                            <Option value={minToMS(0.75)}>45 seconds</Option>
+                            <Option value={minToMS(1)}>60 seconds</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name='playerColor'
+                        label='Your Color'
+                    >
+                        <Select>
+                            <Option value='black'>Black</Option>
+                            <Option value='white'>White</Option>
+                            <Option value='random'>Random</Option>
+                        </Select>
+                    </Form.Item>
+                </Form>
+            </Modal>
+        )
+        const gameStartResponseModal = (
+            <Modal
+                title="Game Start Request"
+                visible={this.state.gameStartResponseModalVisible}
+                onOk={this.gameStartHandleOk}
+                onCancel={this.gameStartHandleCancel}
+                footer={[
+                    <Button key="Refuse" onClick={this.gameStartHandleCancel}>
+                        Not yet
+                    </Button>,
+                    <Button key="Accept" type="primary" onClick={this.gameStartHandleOk}>
+                        Let's start!
+                    </Button>,
+                ]}
+            >
+                <p>Your opponent would like to start the game, will you accept?</p>
+            </Modal>
+        )
         if (!gameStart) {
             return (
                 <div>
-                    <Modal
-                        title="Game Start Request"
-                        visible={this.state.gameStartModalVisible}
-                        onOk={this.gameStartHandleOk}
-                        onCancel={this.gameStartHandleCancel}
-                        footer={[
-                            <Button key="Refuse" onClick={this.gameStartHandleCancel}>
-                                Not yet
-                            </Button>,
-                            <Button key="Accept" type="primary" onClick={this.gameStartHandleOk}>
-                                Let's start!
-                            </Button>,
-                        ]}
-                    >
-                        <p>Your opponent would like to start the game, will you accept?</p>
-                    </Modal>
+                    {gameStartResponseModal}
+                    {gameStartInitModal}
                     {/* <Skeleton active /> */}
                     <Row>
                         <Col flex='650px'>
@@ -1013,22 +1182,7 @@ class Game extends React.Component {
                 >
                     <p>Your opponent would like to end the game with current board, will you accept?</p>
                 </Modal>
-                <Modal
-                    title="Game Start Request"
-                    visible={this.state.gameStartModalVisible}
-                    onOk={this.gameStartHandleOk}
-                    onCancel={this.gameStartHandleCancel}
-                    footer={[
-                        <Button key="Refuse" onClick={this.gameStartHandleCancel}>
-                            Not yet
-                    </Button>,
-                        <Button key="Accept" type="primary" onClick={this.gameStartHandleOk}>
-                            Let's start!
-                    </Button>,
-                    ]}
-                >
-                    <p>Your opponent would like to start the game, will you accept?</p>
-                </Modal>
+                {gameStartResponseModal}
                 <Row>
                     <Col flex='650px'>
                         <Goban vertexSize={30}
