@@ -36,14 +36,6 @@ export function generateMarkerMap(size, vertex) {
     return ret;
 }
 
-export function signToColor(sign) {
-    if (sign === 1) {
-        return "black";
-    } else {
-        return 'white';
-    }
-}
-
 const createTwoWaySwitch = component => ({ stateKey, text, checked }) => {
     return (
         <label>

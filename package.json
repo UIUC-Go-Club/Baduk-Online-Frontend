@@ -28,6 +28,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.0",
     "react-test-renderer": "^17.0.1",
+    "rsuite": "^4.8.5",
     "socket.io": "^2.0.4",
     "wait-on": "^5.2.0",
     "web-vitals": "^0.2.4"
@@ -77,5 +78,10 @@
     "electron-builder": "^22.9.1",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.5"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!antd|@ant-design|rc-.+?|@babel/runtime).+(js|jsx)$"
+    ]
   }
 }

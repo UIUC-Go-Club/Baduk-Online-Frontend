@@ -1,7 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types';
 import ChatMesssage from './chatMessage';
-import { List, Comment, Input } from 'antd'
+import { Input } from 'antd';
+import { List } from 'rsuite';
 import { FormInstance } from 'antd/lib/form';
 import { socket } from "../api";
 import Form from 'antd/lib/form/Form';
@@ -30,23 +31,21 @@ class Chatbox extends React.Component {
     }
 
     render() {
+        const chats = this.props.chats;
         return (
             <div>
                 <List
-                    className="chat-list"
-                    itemLayout="horizontal"
-                    dataSource={this.props.chats}
-                    locale={{emptyText: 'No chat messages yet.'}}
-                    renderItem={item => (
-                        <li>
-                            <Comment
-                                author={item.username}
-                                content={item.message}
-                                datetime={item.timeSent}
-                            />
-                        </li>
-                    )}
-                />
+                    autoScroll
+                    bordered
+                    hover
+                    style={{ height: 300 }}
+                >
+                    {chats.map(({ username, message, timeSent, disabled }, index) => (
+                        <List.Item key={message} index={index} disabled={disabled}>
+                            {username} : {message}
+                        </List.Item>
+                    ))}
+                </List>
                 <Form ref={this.formRef} onFinish={this.sendChat}>
                     <Form.Item
                         name='message'
