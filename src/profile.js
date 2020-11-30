@@ -30,10 +30,6 @@ class Profile extends React.Component {
         this.fetchProfileData();
     }
 
-    componentDidUpdate() {
-        this.fetchProfileData();
-    }
-
     fetchProfileData = () => {
         const endpoint = server_url + 'user';
         fetch(`${endpoint}/${encodeURIComponent(this.state.username)}`, {
@@ -49,7 +45,9 @@ class Profile extends React.Component {
                     loading: false,
                     username: data.username,
                     email: data.email,
-                    password: data.password,
+                    phone: data.phone,
+                    bio: data.bio,
+                    gender: data.gender,
                     rank: data.rank,
                     role: data.role,
                     past_games: data.past_games,
@@ -86,6 +84,7 @@ class Profile extends React.Component {
         const endpoint = server_url + 'user';
         const profileData = {
             email: value.email,
+            phone: value.phone,
         }
         fetch(`${endpoint}/${encodeURIComponent(username)}`, {
             method: 'PATCH',
@@ -100,12 +99,12 @@ class Profile extends React.Component {
             }
             this.setState({
                 editting: false,
-            })
+            }, this.fetchProfileData)
         })
-        .catch((error) => {
-            console.error('update error:', error);
-            message.error('update failed');
-        });
+            .catch((error) => {
+                console.error('update error:', error);
+                message.error('update failed');
+            });
     };
 
     render() {
@@ -126,22 +125,40 @@ class Profile extends React.Component {
                 <Redirect push to={{ pathname: "/game", state: { username: this.state.username } }} />
             )
         }
-        let emailElement;
+        let emailElement, phoneElement;
         if (!editting) {
             emailElement = (<Descriptions.Item label="Email">{this.state.email}</Descriptions.Item>);
-        } 
+            phoneElement = (<Descriptions.Item label="Phone">{this.state.phone}</Descriptions.Item>);
+        }
         let emailEdit;
         if (editting) {
             emailEdit = (
-                <Col span={4}>
-                    <Form initialValues={{ email: this.state.email }}
+                <Col>
+                    <Form initialValues={{
+                        email: this.state.email,
+                        phone: this.state.phone,
+                    }}
                         onFinish={this.updateProfile}
+                        labelCol={{ span: 5, offset: 2 }}
+                        scrollToFirstError
+                        layout={'inline'}
                     >
                         <Form.Item
                             label="Email"
                             name="email"
                         >
-                            <Input defaultValue={this.state.email} />
+                            <Input />
+                        </Form.Item>
+                        <Form.Item
+                            label="Phone"
+                            name="phone"
+                        >
+                            <Input />
+                        </Form.Item>
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit">
+                                Update
+                            </Button>
                         </Form.Item>
                     </Form>
                 </Col>
@@ -154,6 +171,7 @@ class Profile extends React.Component {
                     <Descriptions.Item label="Rank">{this.state.rank}</Descriptions.Item>
                     <Descriptions.Item label="MatchCount">{this.state.live_games.length + this.state.past_games.length}</Descriptions.Item>
                     {emailElement}
+                    {phoneElement}
                 </Descriptions>
                 {emailEdit}
                 <Divider orientation="left">Matches</Divider>
