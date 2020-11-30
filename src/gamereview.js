@@ -223,7 +223,7 @@ class GameReview extends React.Component {
                             style={{ marginRight: 20, marginBottom: 20, flexWrap: 'wrap' }} />
                     </Col>
                     <Col flex='200px'>
-                        <Scrollbars style={{ width: 200, height: 650 }}>
+                        <Scrollbars style={{ height: 650 }} autoHide>
                             <Timeline>
                                 {allMoves.map(({ vertex, sign }, index) => (
                                     <div key={index} onClick={this.handleTreeClick(index + 1)}>
