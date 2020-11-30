@@ -37,7 +37,6 @@ class Chatbox extends React.Component {
                 <List
                     autoScroll
                     bordered
-                    hover
                     style={{ height: 300 }}
                 >
                     {chats.map(({ username, message, timeSent, disabled }, index) => (
