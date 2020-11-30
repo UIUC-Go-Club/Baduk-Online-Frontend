@@ -1,10 +1,11 @@
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
-import { Button, Col, Empty, Row, Timeline } from 'antd';
+import Board from '@sabaki/go-board';
+import { Button, Col, Empty, message, notification, Row, Timeline } from 'antd';
 import React from 'react'
 import { Link } from 'react-router-dom';
-import { socket, server_url } from "./api";
-import { startMap, getCurrentBoard, signToColor, vertexToString } from './utils'
+import { server_url } from "./api";
+import { startMap, getCurrentBoard, signToColor, vertexToString, generateMarkerMap } from './utils'
 
 /**
  * Game review screen
@@ -17,6 +18,7 @@ class GameReview extends React.Component {
             room_id: props.room_id ? props.room_id : '32df',
             loading: true,
             allMoves: [],
+            board: new Board(startMap(19)),
             signMap: startMap(19),
             scoreResult: {},
             player1: [],
@@ -25,6 +27,11 @@ class GameReview extends React.Component {
             komi: 7.5,
             handicap: 0,
             showCoordinates: true,
+            influenceMap: [],
+            markerMap: [],
+            dimmedStones: [],
+            showDimmedStones: false,
+            showInfluenceMap: false,
         }
     }
 
@@ -55,7 +62,8 @@ class GameReview extends React.Component {
                 this.setState({
                     loading: false,
                     allMoves: data.pastMoves,
-                    signMap: getCurrentBoard(data.pastMoves, data.boardSize, data.pastMoves.length),
+                    board: new Board(getCurrentBoard(data.pastMoves, data.boardSize, data.pastMoves.length)),
+                    sign: data.pastMoves.length === 0 ? 1 : data.pastMoves[data.pastMoves.length-1].sign,
                     scoreResult: data.scoreResult,
                     player1: data.players[0],
                     player2: data.players[1],
@@ -71,33 +79,110 @@ class GameReview extends React.Component {
             });
     }
 
-    handleClick = (index) => () => {
-        const newBoard = getCurrentBoard(this.state.allMoves, this.state.boardSize, index)
+    handleTreeClick = (index) => () => {
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, index)
+        const newBoard = new Board(newSignmap)
         this.setState({
-            signMap: newBoard,
+            board: newBoard,
+            sign: this.state.allMoves[index-1].sign,
         })
+    }
+
+    mouseClick = (evt, [x, y]) => {
+        let sign = this.state.sign * -1;
+            try {
+                const newBoard = this.state.board.makeMove(sign, [x, y], { preventOverwrite: true, preventSuicide: true, preventKo: true })
+                this.setState({
+                    board: newBoard,
+                    sign: sign,
+                    lastMove: {vertex: [x,y], sign: sign},
+                    markerMap: generateMarkerMap(this.state.boardSize, [x,y]),
+                    showDimmedStones: false,
+                    showInfluenceMap: false,
+                })
+            } catch (e) {
+                console.error(e);
+            }
+
+    }
+
+    /**
+     * fetch game analysis from server
+     * @param {Number} komi Komi for white player
+     * @param {Number} handicap 
+     * @param {2D-Array} signMap 
+     */
+    fetchAnalysisData = (komi, handicap, signMap) => {
+        const endpoint = server_url + 'game/analysis/';
+        const data = {
+            komi: komi,
+            handicap: handicap,
+            signMap: signMap
+        }
+        fetch(`${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow',
+            body: JSON.stringify(data),
+        }).then(response => response.json())
+            .then(data => {
+                console.log('Analysis fetch success', data);
+                this.setState({
+                    dimmedStones: data.deadStoneVertices,
+                    influenceMap: data.areaMap,
+                    showDimmedStones: true,
+                    showInfluenceMap: true,
+                    score1: data.scoreResult.territory[0],
+                    score2: data.scoreResult.territory[1],
+                    scoreDiff: data.scoreResult.territoryScore
+                })
+                let winnerNote = ''
+                if (data.scoreResult.territoryScore > 0) {
+                    winnerNote = `black has a lead of ${data.scoreResult.territoryScore}`;
+                } else if (data.scoreResult.territoryScore < 0) {
+                    winnerNote = `white has a lead of ${-data.scoreResult.territoryScore}`;
+                } else {
+                    winnerNote = `Situation is a stalemate`;
+                }
+                const result = {
+                    message: 'Current Score',
+                    description: 
+                        `Black have ${data.scoreResult.territory[0]} territories \n 
+                        white have ${data.scoreResult.territory[1]} territories \n
+                        ${winnerNote}`,
+                    duration: 20,
+                    style: {
+                        'whiteSpace': 'pre-line'
+                    }
+                }
+                notification.open(result);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+    showAnalysis = () => {
+        this.fetchAnalysisData(this.state.komi, this.state.handicap, this.state.board.signMap);
     }
 
     render() {
         let {
             loading,
-            show,
-            signMap,
+            board,
             showCoordinates,
             player1,
             player2,
-            myname,
-            end,
-            score1,
-            score2,
-            scoreDiff,
+            room_id,
             allMoves,
             markLastMove,
             markerMap,
             dimmedStones,
-            probMap,
+            influenceMap,
             showDimmedStones,
-            showProbMap,
+            showInfluenceMap,
         } = this.state;
         if (loading) {
             return (
@@ -114,11 +199,14 @@ class GameReview extends React.Component {
         return (
             <div>
                 <Row>
+                    <h2>Game between {player1.username} and {player2.username} in room {room_id} </h2>
+                </Row>
+                <Row>
                     <Col flex='650px'>
                         <Goban vertexSize={30}
-                            signMap={signMap}
+                            signMap={board.signMap}
                             markerMap={markLastMove && markerMap}
-                            paintMap={showProbMap && probMap}
+                            paintMap={showInfluenceMap && influenceMap}
                             dimmedStones={showDimmedStones ? dimmedStones : []}
                             showCoordinates={showCoordinates}
                             onVertexMouseUp={this.mouseClick} 
@@ -127,7 +215,7 @@ class GameReview extends React.Component {
                     <Col flex='auto'>
                         <Timeline>
                             {allMoves.map(({ vertex, sign }, index) => (
-                                <div key={index} onClick={this.handleClick(index+1)}>
+                                <div key={index} onClick={this.handleTreeClick(index+1)}>
                                     <Timeline.Item key={index} >
                                         Move {index} : {vertexToString(vertex)} by {signToColor(sign)}
                                     </Timeline.Item>
@@ -135,6 +223,11 @@ class GameReview extends React.Component {
                             ))}
                         </Timeline>
                     </Col>
+                </Row>
+                <Row>
+                <Col>
+                                <Button onClick={this.showAnalysis}>Show Analysis</Button>
+                            </Col>
                 </Row>
             </div>
         )

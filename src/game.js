@@ -14,7 +14,7 @@ import moveSound2 from './data/2.mp3'
 import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
 import { Redirect } from 'react-router';
-import { startMap, colorToSign } from './utils';
+import { startMap, colorToSign, generateMarkerMap } from './utils';
 
 
 // const { Countdown } = Statistic;
@@ -25,16 +25,6 @@ const moveAudio3 = new Audio(moveSound3)
 const moveAudio4 = new Audio(moveSound4)
 const moveAudios = [moveAudio0, moveAudio1, moveAudio2, moveAudio2, moveAudio3, moveAudio4]
 const defaultSize = 19
-
-export function generateMarkerMap(size, vertex) {
-    let O = { type: 'circle' };
-    let ret = new Array(size).fill(null).map(() => new Array(size).fill(null));
-    if (vertex[0] < 0 || vertex[1] < 0) {
-        return ret;
-    }
-    ret[vertex[1]][vertex[0]] = O;
-    return ret;
-}
 
 const createTwoWaySwitch = component => ({ stateKey, text, checked }) => {
     return (
