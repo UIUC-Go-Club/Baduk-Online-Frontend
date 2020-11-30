@@ -1,5 +1,6 @@
 import React from 'react';
 import 'antd/dist/antd.css';
+import 'rsuite/dist/styles/rsuite-default.css';
 import './App.css';
 import { Button, Col, Layout, Menu, Row } from 'antd';
 import {
@@ -21,6 +22,7 @@ import SignIn from './signinpage';
 import RoomJoin from './roomjoin';
 import Signup from './signup';
 import GameHall from './gamehall';
+import GameReview from './gamereview';
 
 
 
@@ -124,6 +126,7 @@ class App extends React.Component {
                                     <Route path="/signup" render={props => <Signup cb={this.formSubmit} {...props} />} />
                                     <Route path="/game" render={props => <Game username={this.state.username} {...props} />} />
                                     <Route path="/profile" render={props => <Profile cb={this.formSubmit} username={this.state.username} {...props} />} />
+                                    <Route path="/gamereview" render={props => <GameReview username={this.state.username} {...props} />} />
                                 </Switch>
                             </div>
                         </Content>

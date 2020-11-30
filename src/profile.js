@@ -29,7 +29,7 @@ class Profile extends React.Component {
     }
 
     fetchProfileData = () => {
-        const endpoint = server_url + 'user/';
+        const endpoint = server_url + 'user';
         fetch(`${endpoint}/${encodeURIComponent(this.state.username)}`, {
             method: 'GET',
             headers: {
@@ -112,8 +112,13 @@ class Profile extends React.Component {
                             dataSource={this.state.past_games}
                             renderItem={item => (
                                 <List.Item>
-                                    Game id: {item._id} Between {item.players[0].username} and {item.players[1].username}
-                                    <Button> replay</Button>
+                                    Game Room id: {item.room_id} Between {item.players[0].username} and {item.players[1].username}   
+                                    <Link to={{
+                                        pathname: '/gameReview',
+                                        state: {room_id : item.room_id}
+                                        }} >
+                                        <Button> replay</Button>
+                                    </Link>
                                 </List.Item>
                             )}
                         />

@@ -10,6 +10,31 @@ export function colorToSign(color) {
 }
 
 /**
+ * get the color represented by the sign
+ * @param {Integer} sign 1 or -1
+ * @returns 1 => black, -1 => white
+ */
+export function signToColor(sign) {
+    if (sign === 1) {
+        return "black";
+    } else {
+        return 'white';
+    }
+}
+
+/**
+ * convert move vertex to String
+ * @param {Array} vertex array of size 2 [3, 1]
+ */
+export function vertexToString(vertex) {
+    if (vertex[0] === -1) {
+        return 'pass';
+    } else {
+        return `[${vertex[0]}, ${vertex[1]}]`;
+    }
+}
+
+/**
  * Generate an empty 2-d array filled with 0 to serve as starting signMap
  * @param {Integer} size Board size
  * @returns {Array} a 2-d array of size n*n filled with 0
