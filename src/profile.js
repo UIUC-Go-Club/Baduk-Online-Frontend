@@ -1,6 +1,6 @@
 import React from 'react'
 import { socket, server_url } from "./api";
-import { Button, Empty, Descriptions, Collapse, List, Divider, message } from 'antd';
+import { Button, Empty, Descriptions, Collapse, List, Divider, message, Form, Input, Col } from 'antd';
 import { Scrollbars } from 'react-custom-scrollbars';
 import { Link, Redirect } from 'react-router-dom';
 
@@ -18,6 +18,7 @@ class Profile extends React.Component {
             live_games: [],
             loading: true,
             joinedRoom: false,
+            editting: false,
         }
     }
     componentDidMount() {
@@ -26,6 +27,10 @@ class Profile extends React.Component {
                 username: this.props.location.state.username
             })
         }
+        this.fetchProfileData();
+    }
+
+    componentDidUpdate() {
         this.fetchProfileData();
     }
 
@@ -70,8 +75,41 @@ class Profile extends React.Component {
         this.setState({ joinedRoom: true })
     }
 
+    edit = () => {
+        this.setState({
+            editting: true
+        })
+    }
+
+    updateProfile = (value) => {
+        const username = this.state.username;
+        const endpoint = server_url + 'user';
+        const profileData = {
+            email: value.email,
+        }
+        fetch(`${endpoint}/${encodeURIComponent(username)}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow',
+            body: JSON.stringify(profileData)
+        }).then(response => {
+            if (response.status === 204) {
+                message.success('Profile updated!');
+            }
+            this.setState({
+                editting: false,
+            })
+        })
+        .catch((error) => {
+            console.error('update error:', error);
+            message.error('update failed');
+        });
+    };
+
     render() {
-        let { joinedRoom } = this.state;
+        let { joinedRoom, editting } = this.state;
         if (this.state.username === 'loading') {
             return (
                 <Empty description={
@@ -88,13 +126,36 @@ class Profile extends React.Component {
                 <Redirect push to={{ pathname: "/game", state: { username: this.state.username } }} />
             )
         }
+        let emailElement;
+        if (!editting) {
+            emailElement = (<Descriptions.Item label="Email">{this.state.email}</Descriptions.Item>);
+        } 
+        let emailEdit;
+        if (editting) {
+            emailEdit = (
+                <Col span={4}>
+                    <Form initialValues={{ email: this.state.email }}
+                        onFinish={this.updateProfile}
+                    >
+                        <Form.Item
+                            label="Email"
+                            name="email"
+                        >
+                            <Input defaultValue={this.state.email} />
+                        </Form.Item>
+                    </Form>
+                </Col>
+            )
+        }
         return (
             <div>
-                <Descriptions title="Profile" bordered>
+                <Descriptions title="Profile" bordered extra={<Button type="primary" onClick={this.edit}>Edit</Button>}>
                     <Descriptions.Item label="Username">{this.state.username}</Descriptions.Item>
                     <Descriptions.Item label="Rank">{this.state.rank}</Descriptions.Item>
                     <Descriptions.Item label="MatchCount">{this.state.live_games.length + this.state.past_games.length}</Descriptions.Item>
+                    {emailElement}
                 </Descriptions>
+                {emailEdit}
                 <Divider orientation="left">Matches</Divider>
                 <Collapse defaultActiveKey={['1']}>
                     <Panel header="Live Games" key="1">
