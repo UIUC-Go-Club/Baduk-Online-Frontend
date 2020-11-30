@@ -1,6 +1,7 @@
 import React from 'react'
 import { socket, server_url } from "./api";
 import { Button, Empty, Descriptions, Collapse, List, Divider, message } from 'antd';
+import { Scrollbars } from 'react-custom-scrollbars';
 import { Link, Redirect } from 'react-router-dom';
 
 const { Panel } = Collapse;
@@ -39,7 +40,7 @@ class Profile extends React.Component {
         }).then(response => response.json())
             .then(data => {
                 console.log('Success:', data);
-                this.setState({ 
+                this.setState({
                     loading: false,
                     username: data.username,
                     email: data.email,
@@ -67,10 +68,10 @@ class Profile extends React.Component {
         this.props.cb(this.props.username, room_id);
         message.info(`try to join room ${room_id} as ${role}`)
         this.setState({ joinedRoom: true })
-    } 
+    }
 
     render() {
-        let {joinedRoom} = this.state;
+        let { joinedRoom } = this.state;
         if (this.state.username === 'loading') {
             return (
                 <Empty description={
@@ -84,7 +85,7 @@ class Profile extends React.Component {
         }
         if (joinedRoom) {
             return (
-                <Redirect push to={{pathname: "/game", state: { username: this.state.username }}} />
+                <Redirect push to={{ pathname: "/game", state: { username: this.state.username } }} />
             )
         }
         return (
@@ -92,39 +93,44 @@ class Profile extends React.Component {
                 <Descriptions title="Profile" bordered>
                     <Descriptions.Item label="Username">{this.state.username}</Descriptions.Item>
                     <Descriptions.Item label="Rank">{this.state.rank}</Descriptions.Item>
-                    <Descriptions.Item label="MatchCount">{this.state.live_games.length+this.state.past_games.length}</Descriptions.Item>
+                    <Descriptions.Item label="MatchCount">{this.state.live_games.length + this.state.past_games.length}</Descriptions.Item>
                 </Descriptions>
                 <Divider orientation="left">Matches</Divider>
                 <Collapse defaultActiveKey={['1']}>
                     <Panel header="Live Games" key="1">
-                        <List
-                            dataSource={this.state.live_games}
-                            renderItem={item => (
-                                <List.Item>
-                                    Room id: {item.room_id} Between {item.players[0].username} and {item.players[1].username}
-                                    <Button onClick={this.joinRoom(item.room_id)}> rejoin</Button>
-                                </List.Item>
-                            )}
-                        />
+                        <Scrollbars autoHide autoHeight autoHeightMax={300}>
+                            <List
+                                dataSource={this.state.live_games}
+                                renderItem={item => (
+                                    <List.Item>
+                                        Room id: {item.room_id} Between {item.players[0].username} and {item.players[1].username}
+                                        <Button onClick={this.joinRoom(item.room_id)}> rejoin</Button>
+                                    </List.Item>
+                                )}
+                            />
+                        </Scrollbars>
                     </Panel>
                     <Panel header="Past matches" key="2">
-                    <List
-                            dataSource={this.state.past_games}
-                            renderItem={item => (
-                                <List.Item>
-                                    Game Room id: {item.room_id} Between {item.players[0].username} and {item.players[1].username}   
-                                    <Link to={{
-                                        pathname: '/gameReview',
-                                        state: {
-                                            room_id : item.room_id,
-                                            id: item._id
-                                        }
+                        <Scrollbars autoHide autoHeight autoHeightMax={300}>
+                            <List
+                                dataSource={this.state.past_games}
+                                renderItem={item => (
+                                    <List.Item>
+                                        Game Room id: {item.room_id} Between {item.players[0].username} and {item.players[1].username}
+                                        <Link to={{
+                                            pathname: '/gameReview',
+                                            state: {
+                                                room_id: item.room_id,
+                                                id: item._id
+                                            }
                                         }} >
-                                        <Button> replay</Button>
-                                    </Link>
-                                </List.Item>
-                            )}
-                        />
+                                            <Button> replay</Button>
+                                        </Link>
+                                    </List.Item>
+                                )}
+                            />
+                        </Scrollbars>
+
                     </Panel>
                 </Collapse>
             </div>

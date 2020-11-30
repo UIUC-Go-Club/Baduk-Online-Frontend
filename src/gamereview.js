@@ -1,7 +1,8 @@
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import Board from '@sabaki/go-board';
-import { Button, Col, Empty, notification, Row, Timeline } from 'antd';
+import { Button, Col, Empty, message, notification, Row, Timeline } from 'antd';
+import { StepBackwardOutlined, StepForwardOutlined, FastBackwardOutlined, FastForwardOutlined } from '@ant-design/icons'
 import { Scrollbars } from 'react-custom-scrollbars';
 import React from 'react'
 import { Link } from 'react-router-dom';
@@ -20,6 +21,7 @@ class GameReview extends React.Component {
             game_id: '0',
             loading: true,
             allMoves: [],
+            currentTurn: 0,
             board: new Board(startMap(19)),
             signMap: startMap(19),
             scoreResult: {},
@@ -69,16 +71,18 @@ class GameReview extends React.Component {
                         this.setState({
                             loading: false,
                             allMoves: pastMoves,
+                            currentTurn: pastMoves.length,
                             board: new Board(getCurrentBoard(pastMoves, game.boardSize, pastMoves.length)),
                             sign: pastMoves.length === 0 ? 1 : pastMoves[pastMoves.length - 1].sign,
+                            lastMove: pastMoves[pastMoves.length - 1],
+                            markerMap: generateMarkerMap(game.boardSize, pastMoves[pastMoves.length - 1].vertex),
                             scoreResult: game.scoreResult,
                             player1: game.players[0],
                             player2: game.players[1],
                             boardSize: game.boardSize,
                             komi: game.komi,
                             handicap: game.handicap,
-                            winner: game.winner,
-                            currentTurn: game.currentTurn,
+                            winner: game.winner
                         })
                         break;
                     }
@@ -95,6 +99,86 @@ class GameReview extends React.Component {
         this.setState({
             board: newBoard,
             sign: this.state.allMoves[index - 1].sign,
+            lastMove: this.state.allMoves[index - 1],
+            currentTurn: index,
+            markerMap: generateMarkerMap(this.state.boardSize, this.state.allMoves[index - 1].vertex),
+            showDimmedStones: false,
+            showInfluenceMap: false,
+        })
+    }
+
+    /**
+     * go back to first move
+     */
+    fastBackword = () => {
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, 1);
+        this.setState({
+            board: new Board(newSignmap),
+            sign: this.state.allMoves[0].sign,
+            lastMove: this.state.allMoves[0],
+            currentTurn: 1,
+            markerMap: generateMarkerMap(this.state.boardSize, this.state.allMoves[0].vertex),
+            showDimmedStones: false,
+            showInfluenceMap: false,
+        })
+    }
+
+    /**
+     * go to last move (index - 1)
+     */
+    stepBackword = () => {
+        if (this.state.currentTurn <= 1) {
+            message.warning('first turn');
+            return;
+        }
+        const lastTurn = this.state.currentTurn - 1;
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, lastTurn);
+        this.setState({
+            board: new Board(newSignmap),
+            sign: this.state.allMoves[lastTurn - 1].sign,
+            lastMove: this.state.allMoves[lastTurn - 1],
+            currentTurn: lastTurn,
+            markerMap: generateMarkerMap(this.state.boardSize, this.state.allMoves[lastTurn - 1].vertex),
+            showDimmedStones: false,
+            showInfluenceMap: false,
+        })
+    }
+
+    /**
+     * go to next move (index + 1)
+     */
+    stepForword = () => {
+        if (this.state.currentTurn >= this.state.allMoves.length) {
+            message.warning('last turn');
+            return;
+        }
+        const nextTurn = this.state.currentTurn + 1;
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, nextTurn);
+        this.setState({
+            board: new Board(newSignmap),
+            sign: this.state.allMoves[nextTurn - 1].sign,
+            lastMove: this.state.allMoves[nextTurn - 1],
+            currentTurn: nextTurn,
+            markerMap: generateMarkerMap(this.state.boardSize, this.state.allMoves[nextTurn - 1].vertex),
+            showDimmedStones: false,
+            showInfluenceMap: false,
+        })
+    }
+
+    /**
+     * go to final move
+     */
+    fastForward = () => {
+        const lastTurn = this.state.allMoves.length;
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, lastTurn);
+        this.setState({
+            board: new Board(newSignmap),
+            sign: this.state.allMoves[lastTurn - 1].sign,
+            lastMove: this.state.allMoves[lastTurn - 1],
+            currentTurn: lastTurn,
+            markerMap: generateMarkerMap(this.state.boardSize, this.state.allMoves[lastTurn - 1].vertex),
+            showDimmedStones: false,
+            showInfluenceMap: false,
         })
     }
 
@@ -175,7 +259,14 @@ class GameReview extends React.Component {
     }
 
     showAnalysis = () => {
-        this.fetchAnalysisData(this.state.komi, this.state.handicap, this.state.board.signMap);
+        if (this.state.showDimmedStones) {
+            this.setState({
+                showDimmedStones: false,
+                showInfluenceMap: false,
+            })
+        } else {
+            this.fetchAnalysisData(this.state.komi, this.state.handicap, this.state.board.signMap);
+        }
     }
 
     render() {
@@ -187,7 +278,6 @@ class GameReview extends React.Component {
             player2,
             room_id,
             allMoves,
-            markLastMove,
             markerMap,
             dimmedStones,
             influenceMap,
@@ -215,7 +305,7 @@ class GameReview extends React.Component {
                     <Col flex='650px'>
                         <Goban vertexSize={30}
                             signMap={board.signMap}
-                            markerMap={markLastMove && markerMap}
+                            markerMap={markerMap}
                             paintMap={showInfluenceMap && influenceMap}
                             dimmedStones={showDimmedStones ? dimmedStones : []}
                             showCoordinates={showCoordinates}
@@ -237,7 +327,21 @@ class GameReview extends React.Component {
                     </Col>
                 </Row>
                 <Row>
-                    <Col>
+                    <Col span={1} >
+                        <Button size='large' icon={<FastBackwardOutlined />} onClick={this.fastBackword}></Button>
+                    </Col>
+                    <Col span={1} offset={1}>
+                        <Button size='large' icon={<StepBackwardOutlined />} onClick={this.stepBackword}></Button>
+                    </Col>
+                    <Col span={1} offset={1}>
+                        <Button size='large' icon={<StepForwardOutlined />} onClick={this.stepForword}></Button>
+                    </Col>
+                    <Col span={1} offset={1}>
+                        <Button size='large' icon={<FastForwardOutlined />} onClick={this.fastForward}></Button>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={2}>
                         <Button onClick={this.showAnalysis}>Show Analysis</Button>
                     </Col>
                 </Row>
