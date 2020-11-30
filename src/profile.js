@@ -115,7 +115,10 @@ class Profile extends React.Component {
                                     Game Room id: {item.room_id} Between {item.players[0].username} and {item.players[1].username}   
                                     <Link to={{
                                         pathname: '/gameReview',
-                                        state: {room_id : item.room_id}
+                                        state: {
+                                            room_id : item.room_id,
+                                            id: item._id
+                                        }
                                         }} >
                                         <Button> replay</Button>
                                     </Link>

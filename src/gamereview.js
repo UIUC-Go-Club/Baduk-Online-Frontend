@@ -1,7 +1,7 @@
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import Board from '@sabaki/go-board';
-import { Button, Col, Empty, message, notification, Row, Timeline } from 'antd';
+import { Button, Col, Empty, notification, Row, Timeline } from 'antd';
 import React from 'react'
 import { Link } from 'react-router-dom';
 import { server_url } from "./api";
@@ -16,6 +16,7 @@ class GameReview extends React.Component {
         this.state = {
             username: props.username,
             room_id: props.room_id ? props.room_id : '32df',
+            game_id: '0',
             loading: true,
             allMoves: [],
             board: new Board(startMap(19)),
@@ -36,9 +37,10 @@ class GameReview extends React.Component {
     }
 
     componentDidMount() {
-        if (this.props.location.state) {
+        if (this.props.location.state.room_id) {
             this.setState({
-                room_id: this.props.location.state.room_id
+                room_id: this.props.location.state.room_id,
+                game_id: this.props.location.state.id
             }, this.fetchRoomData);
         }
         
@@ -48,7 +50,7 @@ class GameReview extends React.Component {
      * fetch the current game data from restful api
      */
     fetchRoomData = () => {
-        const endpoint = server_url + 'room';
+        const endpoint = server_url + 'game/room';
         console.log(`${endpoint}/${encodeURIComponent(this.state.room_id)}`);
         fetch(`${endpoint}/${encodeURIComponent(this.state.room_id)}`, {
             method: 'GET',
@@ -59,20 +61,27 @@ class GameReview extends React.Component {
         }).then(response => response.json())
             .then(data => {
                 console.log('Success:', data);
-                this.setState({
-                    loading: false,
-                    allMoves: data.pastMoves,
-                    board: new Board(getCurrentBoard(data.pastMoves, data.boardSize, data.pastMoves.length)),
-                    sign: data.pastMoves.length === 0 ? 1 : data.pastMoves[data.pastMoves.length-1].sign,
-                    scoreResult: data.scoreResult,
-                    player1: data.players[0],
-                    player2: data.players[1],
-                    boardSize: data.boardSize,
-                    komi: data.komi,
-                    handicap: data.handicap,
-                    winner: data.winner,
-                    currentTurn: data.currentTurn,
-                })
+                for (let game of data) {
+                    if (game._id === this.state.game_id) {
+                        console.log('game found')
+                        const pastMoves = JSON.parse(game.gameTree);
+                        this.setState({
+                            loading: false,
+                            allMoves: pastMoves,
+                            board: new Board(getCurrentBoard(pastMoves, game.boardSize, pastMoves.length)),
+                            sign: pastMoves.length === 0 ? 1 : pastMoves[pastMoves.length-1].sign,
+                            scoreResult: game.scoreResult,
+                            player1: game.players[0],
+                            player2: game.players[1],
+                            boardSize: game.boardSize,
+                            komi: game.komi,
+                            handicap: game.handicap,
+                            winner: game.winner,
+                            currentTurn: game.currentTurn,
+                        })
+                        break;
+                    }
+                }
             })
             .catch((error) => {
                 console.error('Error:', error);
