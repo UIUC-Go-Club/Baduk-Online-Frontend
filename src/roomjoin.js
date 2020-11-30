@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Input, Button, Col, Select, message } from 'antd';
 import { DesktopOutlined } from '@ant-design/icons';
 
-import { Redirect } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 import { socket } from "./api";
 
 const { Option } = Select;
@@ -95,7 +95,7 @@ class RoomJoin extends React.Component {
         const submitted = this.state.submitted;
         if (submitted) {
             return (
-                <Redirect push to={{pathname: "/game", state: { username: this.state.username }}} />
+                <Redirect push to={{ pathname: "/game", state: { username: this.state.username } }} />
             )
         }
         return (
@@ -151,6 +151,14 @@ class RoomJoin extends React.Component {
                         </Button>
                     </Form.Item>
                 </Form>
+                <Col span={6} offset={8}>
+                    <Link to='/'>
+                        <Button htmlType="button" size='large'>
+                            Return to Game Hall
+                        </Button>
+                    </Link>
+                </Col>
+
             </div>
         )
     }
