@@ -2,7 +2,7 @@ import React from 'react';
 import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
-import { Button, Switch, Row, Col, Card, Popconfirm, message, Statistic, Modal, Badge, Skeleton, List } from 'antd';
+import { Button, Switch, Row, Col, Card, Popconfirm, message, notification, Statistic, Modal, Badge, Skeleton, List } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import Countdown, { zeroPad } from 'react-countdown';
 import { socket, server_url } from "./api";
@@ -528,12 +528,34 @@ class Game extends React.Component {
             .then(data => {
                 console.log('Analysis fetch success', data);
                 this.setState({
-                    scoreResult: data.scoreResult,
                     dimmedStones: data.deadStoneVertices,
                     influenceMap: data.areaMap,
                     showDimmedStones: true,
                     showInfluenceMap: true,
+                    score1: data.scoreResult.territory[0],
+                    score2: data.scoreResult.territory[1],
+                    scoreDiff: data.scoreResult.territoryScore
                 })
+                let winnerNote = ''
+                if (data.scoreResult.territoryScore > 0) {
+                    winnerNote = `black has a lead of ${data.scoreResult.territoryScore}`;
+                } else if (data.scoreResult.territoryScore < 0) {
+                    winnerNote = `white has a lead of ${-data.scoreResult.territoryScore}`;
+                } else {
+                    winnerNote = `Situation is a stalemate`;
+                }
+                const result = {
+                    message: 'Current Score',
+                    description: 
+                        `Black have ${data.scoreResult.territory[0]} territories \n 
+                        white have ${data.scoreResult.territory[1]} territories \n
+                        ${winnerNote}`,
+                    duration: 20,
+                    style: {
+                        'white-space': 'pre-line'
+                    }
+                }
+                notification.open(result);
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -987,7 +1009,9 @@ class Game extends React.Component {
                     </Button>,
                     ]}
                 >
-                    <p>Current score is {player1.username} {score1}, {player2.username} {score2}, </p>
+                    <p>Current score is </p>
+                    <p>{player1.username} as {player1.color} with {score1} territories</p>
+                    <p>{player2.username} as {player2.color} with {score2} territories</p>
                     <p> with a {scoreDiff > 0 ? 'black lead of' + scoreDiff + 'points' : 'white lead of ' + -1 * scoreDiff + 'points'}, </p>
                     <p> would you like to end the game now? </p>
                 </Modal>
