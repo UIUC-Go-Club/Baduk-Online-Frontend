@@ -573,7 +573,14 @@ class Game extends React.Component {
     }
 
     showAnalysis = () => {
-        this.fetchAnalysisData(this.state.komi, this.state.handicap, this.state.board.signMap);
+        if (this.state.showDimmedStones) {
+            this.setState({
+                showDimmedStones: false,
+                showInfluenceMap: false,
+            })
+        } else {
+            this.fetchAnalysisData(this.state.komi, this.state.handicap, this.state.board.signMap);
+        }
     }
 
     getCurrSign = () => {
