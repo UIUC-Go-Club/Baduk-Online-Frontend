@@ -65,7 +65,7 @@ class Game extends React.Component {
             joinFailed: false,
             gameStart: false,
             board: new Board(startMap(defaultSize)),
-            probMap: [],
+            influenceMap: [],
             markerMap: [],
             dimmedStones: [],
             currentTurn: 1,
@@ -100,7 +100,7 @@ class Game extends React.Component {
             countdownLeft2: 3,
             markLastMove: false,
             showDimmedStones: false,
-            showProbMap: false,
+            showInfluenceMap: false,
         }
         this.toggleSwitch = createTwoWaySwitch(this);
     }
@@ -153,6 +153,8 @@ class Game extends React.Component {
                 let newBoard = this.state.board.makeMove(room.lastMove.sign, room.lastMove.vertex);
                 this.setState({
                     board: newBoard,
+                    showDimmedStones: false,
+                    showInfluenceMap: false,
                 })
                 if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                     this.setState({
@@ -338,6 +340,8 @@ class Game extends React.Component {
                 player2: players[1],
                 end: false,
                 currentTurn: currentTurn,
+                showDimmedStones: false,
+                showInfluenceMap: false,
             })
             this.setState({
                 timeLeft1: players[0].reservedTimeLeft,
@@ -471,7 +475,9 @@ class Game extends React.Component {
                     this.setState({
                         currentTurn: room.currentTurn,
                         board: new Board(JSON.parse(room.currentBoardSignedMap)),
-                        locked: !(room.players[room.currentTurn].username === this.state.myname) || this.state.isBystander
+                        locked: !(room.players[room.currentTurn].username === this.state.myname) || this.state.isBystander,
+                        showDimmedStones: false,
+                        showInfluenceMap: false,
                     })
                     if (room.lastMove && room.lastMove.vertex && room.lastMove.vertex.length > 0) {
                         this.setState({
@@ -498,8 +504,48 @@ class Game extends React.Component {
         })
     }
 
+    /**
+     * fetch game analysis from server
+     * @param {Number} komi Komi for white player
+     * @param {Number} handicap 
+     * @param {2D-Array} signMap 
+     */
+    fetchAnalysisData = (komi, handicap, signMap) => {
+        const endpoint = server_url + 'game/analysis/';
+        const data = {
+            komi: komi,
+            handicap: handicap,
+            signMap: signMap
+        }
+        fetch(`${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow',
+            body: JSON.stringify(data),
+        }).then(response => response.json())
+            .then(data => {
+                console.log('Analysis fetch success', data);
+                this.setState({
+                    scoreResult: data.scoreResult,
+                    dimmedStones: data.deadStoneVertices,
+                    influenceMap: data.areaMap,
+                    showDimmedStones: true,
+                    showInfluenceMap: true,
+                })
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+    showAnalysis = () => {
+        this.fetchAnalysisData(this.state.komi, this.state.handicap, this.state.board.signMap);
+    }
+
     getCurrSign = () => {
-        return colorToSign(this.getCurrPlayer().color) 
+        return colorToSign(this.getCurrPlayer().color)
     }
 
     /**
@@ -531,25 +577,27 @@ class Game extends React.Component {
                 if (this.isPlayerTurn(0)) {
                     this.pauseTimer1();
                     setTimeout(() => {
-                        socket.emit('move', { 
-                        room_id: this.state.room_id, 
-                        sign: sign, 
-                        vertex: [x, y], 
-                        reservedTimeLeft: this.state.timeLeft1,
-                        countdownLeft: this.state.countdownLeft1
-                    })}, 100)
+                        socket.emit('move', {
+                            room_id: this.state.room_id,
+                            sign: sign,
+                            vertex: [x, y],
+                            reservedTimeLeft: this.state.timeLeft1,
+                            countdownLeft: this.state.countdownLeft1
+                        })
+                    }, 100)
                 } else if (this.isPlayerTurn(1)) {
                     this.pauseTimer2();
                     setTimeout(() => {
-                        socket.emit('move', { 
-                        room_id: this.state.room_id, 
-                        sign: sign, 
-                        vertex: [x, y], 
-                        reservedTimeLeft: this.state.timeLeft2,
-                        countdownLeft: this.state.countdownLeft2
-                    })}, 100)
+                        socket.emit('move', {
+                            room_id: this.state.room_id,
+                            sign: sign,
+                            vertex: [x, y],
+                            reservedTimeLeft: this.state.timeLeft2,
+                            countdownLeft: this.state.countdownLeft2
+                        })
+                    }, 100)
                 }
-                
+
                 console.log('sent move to server');
             } catch (e) {
                 console.error(e);
@@ -568,23 +616,25 @@ class Game extends React.Component {
         if (this.isPlayerTurn(0)) {
             this.pauseTimer1();
             setTimeout(() => {
-                socket.emit('move', { 
-                room_id: this.state.room_id, 
-                sign: this.getCurrSign(), 
-                vertex: [-1, -1], 
-                reservedTimeLeft: this.state.timeLeft1,
-                countdownLeft: this.state.countdownLeft1
-            })}, 100)
+                socket.emit('move', {
+                    room_id: this.state.room_id,
+                    sign: this.getCurrSign(),
+                    vertex: [-1, -1],
+                    reservedTimeLeft: this.state.timeLeft1,
+                    countdownLeft: this.state.countdownLeft1
+                })
+            }, 100)
         } else if (this.isPlayerTurn(1)) {
             this.pauseTimer2();
             setTimeout(() => {
-                socket.emit('move', { 
-                room_id: this.state.room_id, 
-                sign: this.getCurrSign(), 
-                vertex: [-1, -1], 
-                reservedTimeLeft: this.state.timeLeft2,
-                countdownLeft: this.state.countdownLeft2
-            })}, 100)
+                socket.emit('move', {
+                    room_id: this.state.room_id,
+                    sign: this.getCurrSign(),
+                    vertex: [-1, -1],
+                    reservedTimeLeft: this.state.timeLeft2,
+                    countdownLeft: this.state.countdownLeft2
+                })
+            }, 100)
         }
         // socket.emit('move', { room_id: this.state.room_id, sign: this.getCurrSign(), vertex: [-1, -1] })
         console.log(`you passed`);
@@ -739,7 +789,7 @@ class Game extends React.Component {
     isPlayerTurn = (player) => {
         return player === this.state.currentTurn;
     }
-    
+
     /**
      * return the current player
      */
@@ -799,9 +849,9 @@ class Game extends React.Component {
      * callback function for Countdown onPause, pause the countdown
      * @param {integer} timerNo 
      */
-    countdownPause = (timerNo) => ({total}) => {
+    countdownPause = (timerNo) => ({ total }) => {
         this.setState(() => ({
-            ['timeLeft' + timerNo] : total
+            ['timeLeft' + timerNo]: total
         }))
     }
 
@@ -829,9 +879,9 @@ class Game extends React.Component {
             markLastMove,
             markerMap,
             dimmedStones,
-            probMap,
+            influenceMap,
             showDimmedStones,
-            showProbMap,
+            showInfluenceMap,
         } = this.state;
         if (joinFailed) {
             return (
@@ -865,7 +915,7 @@ class Game extends React.Component {
                                 showCoordinates={showCoordinates}
                                 fuzzyStonePlacement={realisticPlacement}
                                 animateStonePlacement={animated}
-                                onVertexMouseUp={this.mouseClick}/>
+                                onVertexMouseUp={this.mouseClick} />
                         </Col>
                         <Col flex='100px'></Col>
                         <Col flex='auto'>
@@ -978,7 +1028,7 @@ class Game extends React.Component {
                         <Goban vertexSize={30}
                             signMap={board.signMap}
                             markerMap={markLastMove && markerMap}
-                            paintMap={showProbMap && probMap}
+                            paintMap={showInfluenceMap && influenceMap}
                             dimmedStones={showDimmedStones ? dimmedStones : []}
                             showCoordinates={showCoordinates}
                             fuzzyStonePlacement={realisticPlacement}
@@ -1071,6 +1121,9 @@ class Game extends React.Component {
                             </Col>
                             <Col>
                                 <Button onClick={this.gameStart} disabled={isBystander || gameStart}>Start game</Button>
+                            </Col>
+                            <Col>
+                                <Button onClick={this.showAnalysis} disabled={!gameStart}>Show Analysis</Button>
                             </Col>
                         </Row>
                         <Row>
