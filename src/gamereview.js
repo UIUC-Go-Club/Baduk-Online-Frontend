@@ -33,6 +33,7 @@ class GameReview extends React.Component {
             showCoordinates: true,
             influenceMap: [],
             markerMap: [],
+            initBoardSignedMap: [],
             dimmedStones: [],
             showDimmedStones: false,
             showInfluenceMap: false,
@@ -72,7 +73,8 @@ class GameReview extends React.Component {
                             loading: false,
                             allMoves: pastMoves,
                             currentTurn: pastMoves.length,
-                            board: new Board(getCurrentBoard(pastMoves, game.boardSize, pastMoves.length)),
+                            board: new Board(getCurrentBoard(pastMoves, game.boardSize, pastMoves.length, JSON.parse(game.initBoardSignedMap))),
+                            initBoardSignedMap: JSON.parse(game.initBoardSignedMap),
                             sign: pastMoves.length === 0 ? 1 : pastMoves[pastMoves.length - 1].sign,
                             lastMove: pastMoves[pastMoves.length - 1],
                             markerMap: generateMarkerMap(game.boardSize, pastMoves[pastMoves.length - 1].vertex),
@@ -94,7 +96,7 @@ class GameReview extends React.Component {
     }
 
     handleTreeClick = (index) => () => {
-        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, index)
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, index, this.state.initBoardSignedMap)
         const newBoard = new Board(newSignmap)
         this.setState({
             board: newBoard,
@@ -111,7 +113,7 @@ class GameReview extends React.Component {
      * go back to first move
      */
     fastBackword = () => {
-        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, 1);
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, 1, this.state.initBoardSignedMap);
         this.setState({
             board: new Board(newSignmap),
             sign: this.state.allMoves[0].sign,
@@ -132,7 +134,7 @@ class GameReview extends React.Component {
             return;
         }
         const lastTurn = this.state.currentTurn - 1;
-        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, lastTurn);
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, lastTurn, this.state.initBoardSignedMap);
         this.setState({
             board: new Board(newSignmap),
             sign: this.state.allMoves[lastTurn - 1].sign,
@@ -153,7 +155,7 @@ class GameReview extends React.Component {
             return;
         }
         const nextTurn = this.state.currentTurn + 1;
-        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, nextTurn);
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, nextTurn, this.state.initBoardSignedMap);
         this.setState({
             board: new Board(newSignmap),
             sign: this.state.allMoves[nextTurn - 1].sign,
@@ -170,7 +172,7 @@ class GameReview extends React.Component {
      */
     fastForward = () => {
         const lastTurn = this.state.allMoves.length;
-        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, lastTurn);
+        const newSignmap = getCurrentBoard(this.state.allMoves, this.state.boardSize, lastTurn, this.state.initBoardSignedMap);
         this.setState({
             board: new Board(newSignmap),
             sign: this.state.allMoves[lastTurn - 1].sign,

@@ -347,6 +347,7 @@ class Game extends React.Component {
                 showDimmedStones: false,
                 showInfluenceMap: false,
             })
+            const initBoardSignedMap = JSON.parse(room.initBoardSignedMap)
             this.setState({
                 timeLeft1: players[0].reservedTimeLeft,
                 timeLeft2: players[1].reservedTimeLeft,
@@ -359,7 +360,7 @@ class Game extends React.Component {
                 handicap: room.handicap,
                 randomPlayerColor: room.randomPlayerColor,
                 boardSize: room.boardSize,
-                board: new Board(startMap(room.boardSize)),
+                board: new Board(initBoardSignedMap),
             })
 
             if (this.state.myname === this.state.player1.username) {

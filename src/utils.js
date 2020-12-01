@@ -73,8 +73,13 @@ export function minToMS(minutes) {
  * @param {Integer} nMoves currently view which move
  * @returns a signMap representing the board at nth move
  */
-export const getCurrentBoard = (pastMoves, boardSize, nMoves) => {
-    let board = new Board(startMap(boardSize));
+export const getCurrentBoard = (pastMoves, boardSize, nMoves, initBoard=null) => {
+    let board;
+    if (initBoard) {
+        board = new Board(initBoard);
+    } else {
+        board = new Board(startMap(boardSize));
+    }
     for (let move of pastMoves.slice(0, nMoves)) {
         board = board.makeMove(move.sign, move.vertex)
     }
