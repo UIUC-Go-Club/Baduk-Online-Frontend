@@ -61,7 +61,7 @@ class Game extends React.Component {
             room_id: '',
             player1: { username: 'waiting', color: 'white' },
             player2: { username: 'waiting', color: 'black' },
-            myname: props.username,
+            myname: localStorage.getItem('username'),
             mycolor: '',
             score1: 0,
             score2: 0,
@@ -104,11 +104,11 @@ class Game extends React.Component {
 
     componentDidMount() {
         this.configureSocket();
-        if (this.props.location.state) {
-            this.setState({
-                myname: this.props.location.state.username
-            })
-        }
+        // if (this.props.location.state) {
+        //     this.setState({
+        //         myname: this.props.location.state.username
+        //     })
+        // }
     }
 
     componentWillUnmount() {

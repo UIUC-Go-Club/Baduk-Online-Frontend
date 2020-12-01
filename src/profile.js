@@ -10,7 +10,7 @@ class Profile extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: props.username ? props.username : 'loading',
+            username: localStorage.getItem('username'),
             password: '',
             rank: '',
             role: '',
@@ -22,11 +22,11 @@ class Profile extends React.Component {
         }
     }
     componentDidMount() {
-        if (this.props.location.state) {
-            this.setState({
-                username: this.props.location.state.username
-            })
-        }
+        // if (this.props.location.state) {
+        //     this.setState({
+        //         username: this.props.location.state.username
+        //     })
+        // }
         this.fetchProfileData();
     }
 
@@ -68,7 +68,6 @@ class Profile extends React.Component {
             return;
         }
         socket.emit('join_room_player', { username: this.state.username, room_id: room_id });
-        this.props.cb(this.props.username, room_id);
         message.info(`try to join room ${room_id} as ${role}`)
         this.setState({ joinedRoom: true })
     }
@@ -109,7 +108,7 @@ class Profile extends React.Component {
 
     render() {
         let { joinedRoom, editting } = this.state;
-        if (this.state.username === 'loading') {
+        if (!this.state.username) {
             return (
                 <Empty description={
                     <span>

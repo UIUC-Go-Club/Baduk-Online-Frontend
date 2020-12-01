@@ -34,7 +34,7 @@ class App extends React.Component {
         super(props);
         this.state = {
             collapsed: false,
-            username: '',
+            username: localStorage.getItem('username'),
             room_id: ''
         }
     }
@@ -55,6 +55,7 @@ class App extends React.Component {
 
     logout = () => {
         console.log('logout');
+        localStorage.removeItem('username');
         this.setState({ username: '' })
     }
 
@@ -120,13 +121,13 @@ class App extends React.Component {
                         <Content>
                             <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
                                 <Switch>
-                                    <Route exact path="/" render={props => <GameHall cb={this.formSubmit} username={this.state.username} {...props} />} />
+                                    <Route exact path="/" render={props => <GameHall cb={this.formSubmit} {...props} />} />
                                     <Route path="/signin" render={props => <SignIn cb={this.formSubmit} {...props} />}></Route>
-                                    <Route path="/joinroom" render={props => <RoomJoin cb={this.formSubmit} username={this.state.username} {...props} />} />
+                                    <Route path="/joinroom" render={props => <RoomJoin cb={this.formSubmit} {...props} />} />
                                     <Route path="/signup" render={props => <Signup cb={this.formSubmit} {...props} />} />
-                                    <Route path="/game" render={props => <Game username={this.state.username} {...props} />} />
-                                    <Route path="/profile" render={props => <Profile cb={this.formSubmit} username={this.state.username} {...props} />} />
-                                    <Route path="/gamereview" render={props => <GameReview username={this.state.username} {...props} />} />
+                                    <Route path="/game" render={props => <Game {...props} />} />
+                                    <Route path="/profile" render={props => <Profile cb={this.formSubmit} {...props} />} />
+                                    <Route path="/gamereview" render={props => <GameReview {...props} />} />
                                 </Switch>
                             </div>
                         </Content>

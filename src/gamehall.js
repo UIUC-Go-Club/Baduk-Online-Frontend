@@ -22,7 +22,7 @@ class GameHall extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: props.username,
+            username: localStorage.getItem('username'),
             roomJoined: false,
             loading: true,
             gameRooms: [],
@@ -30,11 +30,11 @@ class GameHall extends React.Component {
     }
 
     componentDidMount() {
-        if (this.props.location.state) {
-            this.setState({
-                username: this.props.location.state.username
-            })
-        }
+        // if (this.props.location.state) {
+        //     this.setState({
+        //         username: this.props.location.state.username
+        //     })
+        // }
         this.fetchRoomData();
     }
 
@@ -107,7 +107,7 @@ class GameHall extends React.Component {
                         No active game room found.
                     </span>
                 }>
-                    <Link to='/createRoom'><Button type="primary">Host new game</Button></Link>
+                    <Link to='/joinroom'><Button type="primary">Host new game</Button></Link>
                 </Empty>
             )
         }

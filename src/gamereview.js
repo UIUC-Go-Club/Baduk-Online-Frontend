@@ -16,7 +16,7 @@ class GameReview extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: props.username,
+            username: localStorage.getItem('username'),
             room_id: props.room_id ? props.room_id : '32df',
             game_id: '0',
             loading: true,

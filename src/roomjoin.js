@@ -27,7 +27,7 @@ class RoomJoin extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: props.username,
+            username: localStorage.getItem('username'),
             submitted: false
         }
     }
@@ -35,11 +35,11 @@ class RoomJoin extends React.Component {
     formRef = React.createRef();
 
     componentDidMount() {
-        if (this.props.location.state) {
-            this.setState({
-                username: this.props.location.state.username
-            })
-        }
+        // if (this.props.location.state) {
+        //     this.setState({
+        //         username: this.props.location.state.username
+        //     })
+        // }
     }
 
     componentWillUnmount() {
@@ -75,7 +75,7 @@ class RoomJoin extends React.Component {
             })
             message.info(`try to create room ${room_id}`)
         }
-        this.props.cb(this.props.username, room_id);
+        // this.props.cb(this.props.username, room_id);
         this.setState({ submitted: true })
     }
 

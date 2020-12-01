@@ -24,7 +24,7 @@ class SignIn extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: '',
+            username: localStorage.getItem('username'),
             submitted: false
         }
     }
@@ -59,8 +59,10 @@ class SignIn extends React.Component {
             .then(data => {
                 console.log('Success:', data);
                 message.success('login success');
-                this.props.cb(username, password);
-                this.setState({ submitted: true, username: username })
+                // this.props.cb(data.username, password);
+                localStorage.setItem('username', data.username);
+                localStorage.setItem('jwt_token', data.jwt);
+                this.setState({ submitted: true, username: data.username })
             })
             .catch((error) => {
                 console.error('Error:', error);
