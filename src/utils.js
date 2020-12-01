@@ -85,3 +85,20 @@ export const getCurrentBoard = (pastMoves, boardSize, nMoves, initBoard=null) =>
     }
     return board.signMap;
 }
+
+/**
+ * return vertex size for rendering the baord in gamehall to achieve uniform size
+ * values are hardcoded
+ * @param {Integer} boardSize 
+ */
+export const getBoardVertexSize = (boardSize) => {
+    switch (boardSize) {
+        case 9:
+            return 26
+        case 13: 
+            return 18.6
+        case 19:
+        default: 
+            return 13;
+    }
+}

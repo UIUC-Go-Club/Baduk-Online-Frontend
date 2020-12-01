@@ -5,7 +5,7 @@ import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
 import { Link, Redirect } from 'react-router-dom';
 import { socket, server_url } from "./api";
-import { startMap, getCurrentBoard } from './utils'
+import { startMap, getCurrentBoard, getBoardVertexSize } from './utils'
 
 const roomText = (room) => (
     <div>
@@ -92,7 +92,7 @@ class GameHall extends React.Component {
                 title={`Room id: ${room.room_id}`} 
                 content={roomText(room)}>
                 <TouchableOpacity key={room.room_id} onPress={this.roomLinkClick(room.room_id)} >
-                    <Goban vertexSize={13}
+                    <Goban vertexSize={getBoardVertexSize(room.boardSize)}
                         signMap={room.pastMoves.length === 0 ? startMap(room.boardSize) : getCurrentBoard(room.pastMoves, room.boardSize, room.pastMoves.length, JSON.parse(room.initBoardSignedMap))}
                         showCoordinates={false} 
                         style={{marginRight: 10, marginBottom: 10, flexWrap: 'wrap'}}/>
