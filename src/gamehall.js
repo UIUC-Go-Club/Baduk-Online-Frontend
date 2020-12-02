@@ -93,7 +93,7 @@ class GameHall extends React.Component {
                 content={roomText(room)}>
                 <TouchableOpacity key={room.room_id} onPress={this.roomLinkClick(room.room_id)} >
                     <Goban vertexSize={getBoardVertexSize(room.boardSize)}
-                        signMap={room.pastMoves.length === 0 ? JSON.parse(room.initBoardSignedMap) : JSON.parse(room.currentBoardSignedMap)}
+                        signMap={!room.currentBoardSignedMap ? startMap(room.boardSize) : JSON.parse(room.currentBoardSignedMap)}
                         showCoordinates={false} 
                         style={{marginRight: 10, marginBottom: 10, flexWrap: 'wrap'}}/>
                 </TouchableOpacity>
