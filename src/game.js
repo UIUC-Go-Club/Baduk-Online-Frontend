@@ -2,7 +2,7 @@ import React from 'react';
 import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
-import { Button, Switch, Row, Col, Card, Popconfirm, Select, message, notification, Statistic, Modal, Badge, Skeleton, List, Form, Input, Descriptions } from 'antd';
+import { Button, Switch, Row, Col, Card, Popconfirm, Select, message, notification, Statistic, Modal, Badge, Skeleton, List, Form, Input, Descriptions, Empty } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import Countdown, { zeroPad } from 'react-countdown';
 import { socket, server_url } from "./api";
@@ -15,6 +15,7 @@ import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
 import { Redirect } from 'react-router';
 import { startMap, colorToSign, generateMarkerMap, minToMS, MSToMinString, MSToSecString } from './utils';
+import { Link } from 'react-router-dom';
 
 
 // const { Countdown } = Statistic;
@@ -954,6 +955,18 @@ class Game extends React.Component {
     }
 
     render() {
+        if (!this.state.room_id) {
+            return (
+                <Empty description={
+                    <span>
+                        Please join a room to play
+                    </span>
+                }>
+                    <Link to='/joinroom'><Button >Join A Room</Button></Link>
+                    <Link to='/'><Button type="primary">Return to Game Hall</Button></Link>
+                </Empty>
+            )
+        }
         let {
             joinFailed,
             gameStart,
