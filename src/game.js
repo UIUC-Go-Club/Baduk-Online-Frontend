@@ -14,7 +14,7 @@ import moveSound2 from './data/2.mp3'
 import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
 import { Redirect } from 'react-router';
-import { startMap, colorToSign, generateMarkerMap, minToMS } from './utils';
+import { startMap, colorToSign, generateMarkerMap, minToMS, MSToMinString, MSToSecString } from './utils';
 
 
 // const { Countdown } = Statistic;
@@ -383,12 +383,15 @@ class Game extends React.Component {
         socket.on('game start init', (data) => {
             if (!this.state.isBystander) {
                 const room = JSON.parse(data);
+                console.log(room.players);
                 this.setState({
                     countdownTime: room.countdownTime,
+                    countdownChance: room.countdown,
                     komi: room.komi,
                     handicap: room.handicap,
                     randomPlayerColor: room.randomPlayerColor,
                     boardSize: room.boardSize,
+                    reservedTime: room.reservedTime,
                     player1: room.players[0],
                     player2: room.players[1],
                 }, () => this.setState({
@@ -1090,20 +1093,20 @@ class Game extends React.Component {
                 ]}
             >
                 <p>Your opponent would like to start the game with the following settings, will you accept?</p>
-                <Descriptions>
-                    <Descriptions.Item label='Board Size'>{this.state.boardSize}</Descriptions.Item>
-                    <Descriptions.Item label='Komi'>{this.state.komi}</Descriptions.Item>
-                    <Descriptions.Item label='Handicap'>{this.state.handicap}</Descriptions.Item>
-                    <Descriptions.Item label='Reserved Time'>{this.state.player1.reservedTime}</Descriptions.Item>
-                    <Descriptions.Item label='Countdown Time'>{this.state.player1.countdownTime}</Descriptions.Item>
-                    <Descriptions.Item label='Are player colors random?'>{this.state.randomPlayerColor}</Descriptions.Item>
-                    {() => {
-                        return this.state.randomPlayerColor ? null: (
+                <Descriptions bordered>
+                    <Descriptions.Item label='Board Size' span={3}>{this.state.boardSize}</Descriptions.Item>
+                    <Descriptions.Item label='Komi'span={3}>{this.state.komi}</Descriptions.Item>
+                    <Descriptions.Item label='Handicap'span={3}>{this.state.handicap}</Descriptions.Item>
+                    <Descriptions.Item label='Reserved Time'span={3}>{`${MSToMinString(this.state.reservedTime)} minutes`}</Descriptions.Item>
+                    <Descriptions.Item label='Countdown Time'span={3}>{`${MSToSecString(this.state.countdownTime)} seconds`}</Descriptions.Item>
+                    <Descriptions.Item label='Countdown Chances'span={3}>{this.state.countdownChance}</Descriptions.Item>
+                    <Descriptions.Item label='Random colors?'span={3}>{this.state.randomPlayerColor ? 'Yes' : 'No'}</Descriptions.Item>
+                    {this.state.randomPlayerColor ? null: (
                             this.state.player1.username === myname ? (
-                                <Descriptions.Item label='Your Color'>{this.state.player1.color}</Descriptions.Item>
-                            ) : <Descriptions.Item label='Your Color'>{this.state.player2.color}</Descriptions.Item>
-                        ) ;
-                    }}
+                                <Descriptions.Item label='Your Color'span={3}>{this.state.player1.color}</Descriptions.Item>
+                            ) : <Descriptions.Item label='Your Color'span={3}>{this.state.player2.color}</Descriptions.Item>
+                        )
+                    }
                 </Descriptions>
             </Modal>
         )

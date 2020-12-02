@@ -45,7 +45,9 @@ class App extends React.Component {
 
     formSubmit = (username, room_id) => {
         console.log(username);
-        this.setState({ username, room_id });
+        this.setState({ 
+            username: localStorage.getItem('username'), 
+            room_id });
     }
 
     loginSubmit = (username, password) => {
@@ -108,10 +110,10 @@ class App extends React.Component {
                     <Layout className="site-layout">
                         <Header className="site-layout-background" style={{ padding: 0 }}>
                             <Row>
-                                <Col span={6}>
+                                <Col span={10}>
                                     <h1>{this.state.username!=='' && `     Welcome ${this.state.username ? this.state.username : 'to Baduk Online'}`}</h1>
                                 </Col>
-                                <Col span={6} offset={12}>
+                                <Col span={6} offset={8}>
                                     <Link to=''>
                                         <Button size='large' onClick={this.logout}>Logout</Button>
                                     </Link>
