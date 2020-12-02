@@ -2,7 +2,7 @@ import React from 'react';
 import Board from '@sabaki/go-board';
 import { Goban } from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
-import { Button, Switch, Row, Col, Card, Popconfirm, Select, message, notification, Statistic, Modal, Badge, Skeleton, List, Form, Input } from 'antd';
+import { Button, Switch, Row, Col, Card, Popconfirm, Select, message, notification, Statistic, Modal, Badge, Skeleton, List, Form, Input, Descriptions } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import Countdown, { zeroPad } from 'react-countdown';
 import { socket, server_url } from "./api";
@@ -380,11 +380,20 @@ class Game extends React.Component {
             }
         })
 
-        socket.on('game start init', () => {
+        socket.on('game start init', (data) => {
             if (!this.state.isBystander) {
+                const room = JSON.parse(data);
                 this.setState({
+                    countdownTime: room.countdownTime,
+                    komi: room.komi,
+                    handicap: room.handicap,
+                    randomPlayerColor: room.randomPlayerColor,
+                    boardSize: room.boardSize,
+                    player1: room.players[0],
+                    player2: room.players[1],
+                }, () => this.setState({
                     gameStartResponseModalVisible: true
-                })
+                }))
             }
         })
 
@@ -754,12 +763,12 @@ class Game extends React.Component {
             boardSize,
             handicap,
             komi,
-            countdown : countdownChance,
+            countdown: countdownChance,
             countdownTime,
             reservedTime,
             randomPlayerColor,
-            [myname]: { color: playerColor},
-            [otherName]: {color: otherColor},
+            [myname]: { color: playerColor },
+            [otherName]: { color: otherColor },
         }
         console.log(gameStartSetting)
         socket.emit('game start init', gameStartSetting);
@@ -986,17 +995,17 @@ class Game extends React.Component {
                 ]}
             >
                 <Form id='game_start_form'
-                onFinish={this.gameStartConfirm}
-                initialValues={{
-                    boardSize: this.state.boardSize,
-                    handicap: this.state.handicap,
-                    komi: this.state.komi,
-                    reservedTime: this.state.reservedTime,
-                    countdownChance: this.state.countdownChance,
-                    countdownTime: this.state.countdownTime,
-                    playerColor: 'random'
-                }}
-                ref={this.formRef}>
+                    onFinish={this.gameStartConfirm}
+                    initialValues={{
+                        boardSize: this.state.boardSize,
+                        handicap: this.state.handicap,
+                        komi: this.state.komi,
+                        reservedTime: this.state.reservedTime,
+                        countdownChance: this.state.countdownChance,
+                        countdownTime: this.state.countdownTime,
+                        playerColor: 'random'
+                    }}
+                    ref={this.formRef}>
                     <Form.Item
                         name='boardSize'
                         label='Board Size'
@@ -1080,7 +1089,22 @@ class Game extends React.Component {
                     </Button>,
                 ]}
             >
-                <p>Your opponent would like to start the game, will you accept?</p>
+                <p>Your opponent would like to start the game with the following settings, will you accept?</p>
+                <Descriptions>
+                    <Descriptions.Item label='Board Size'>{this.state.boardSize}</Descriptions.Item>
+                    <Descriptions.Item label='Komi'>{this.state.komi}</Descriptions.Item>
+                    <Descriptions.Item label='Handicap'>{this.state.handicap}</Descriptions.Item>
+                    <Descriptions.Item label='Reserved Time'>{this.state.player1.reservedTime}</Descriptions.Item>
+                    <Descriptions.Item label='Countdown Time'>{this.state.player1.countdownTime}</Descriptions.Item>
+                    <Descriptions.Item label='Are player colors random?'>{this.state.randomPlayerColor}</Descriptions.Item>
+                    {() => {
+                        return this.state.randomPlayerColor ? null: (
+                            this.state.player1.username === myname ? (
+                                <Descriptions.Item label='Your Color'>{this.state.player1.color}</Descriptions.Item>
+                            ) : <Descriptions.Item label='Your Color'>{this.state.player2.color}</Descriptions.Item>
+                        ) ;
+                    }}
+                </Descriptions>
             </Modal>
         )
         if (!gameStart) {

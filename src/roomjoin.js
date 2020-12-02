@@ -64,6 +64,10 @@ class RoomJoin extends React.Component {
             }
             message.info(`try to join room ${room_id} as ${role}`)
         } else if (type === 'host') {
+            if (!this.state.username) {
+                message.warning('please login')
+                return;
+            }
             socket.emit('create room', {
                 username: this.state.username,
                 room_id: room_id,
