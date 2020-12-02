@@ -109,7 +109,7 @@ class App extends React.Component {
                         <Header className="site-layout-background" style={{ padding: 0 }}>
                             <Row>
                                 <Col span={6}>
-                                    <h1>{this.state.username!=='' && `     Welcome ${this.state.username}`}</h1>
+                                    <h1>{this.state.username!=='' && `     Welcome ${this.state.username ? this.state.username : 'to Baduk Online'}`}</h1>
                                 </Col>
                                 <Col span={6} offset={12}>
                                     <Link to=''>

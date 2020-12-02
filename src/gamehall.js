@@ -69,7 +69,7 @@ class GameHall extends React.Component {
     roomLinkClick = (room_id) => () => {
         const role = 'player';
         console.log(`user: ${this.state.username} joined room ${room_id} as ${role}`);
-        if (this.state.username === '') {
+        if (!this.state.username) {
             message.warning('please login')
             return;
         }

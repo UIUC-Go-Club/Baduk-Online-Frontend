@@ -52,7 +52,7 @@ class RoomJoin extends React.Component {
         const { role, type, boardSize, reservedTime, countdown, countdownTime, persistent } = values;
         if (type === 'join') {
             console.log(`user: ${this.state.username} joined room ${room_id} as ${role}`);
-            if (this.state.username === '') {
+            if (!this.state.username) {
                 message.warning('please login')
                 return;
             }
