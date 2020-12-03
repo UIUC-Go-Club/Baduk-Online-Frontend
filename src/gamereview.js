@@ -41,7 +41,7 @@ class GameReview extends React.Component {
     }
 
     componentDidMount() {
-        if (this.props.location.state.room_id) {
+        if (this.props.location.state) {
             this.setState({
                 room_id: this.props.location.state.room_id,
                 game_id: this.props.location.state.id
