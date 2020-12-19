@@ -57,9 +57,9 @@ class RoomJoin extends React.Component {
                 return;
             }
             if (role === 'player') {
-                socket.emit('join_room_player', { username: this.state.username, room_id: room_id });
+                socket.emit('join room player', { username: this.state.username, room_id: room_id });
             } else {
-                socket.emit('join_room_bystander', { username: this.state.username, room_id: room_id })
+                socket.emit('join room bystander', { username: this.state.username, room_id: room_id })
                 console.log('bystander join');
             }
             message.info(`try to join room ${room_id} as ${role}`)

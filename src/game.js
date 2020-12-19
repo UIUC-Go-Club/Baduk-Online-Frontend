@@ -334,7 +334,7 @@ class Game extends React.Component {
                 });
         })
 
-        socket.on('game start', (data) => {
+        socket.on('game start result', (data) => {
             // this.resetBoard();
             const room = JSON.parse(data);
             let { room_id, players, currentTurn } = room;

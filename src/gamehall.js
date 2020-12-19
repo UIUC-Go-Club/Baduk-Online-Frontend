@@ -78,7 +78,7 @@ class GameHall extends React.Component {
             message.warning('please login')
             return;
         }
-        socket.emit('join_room_player', { username: this.state.username, room_id: room_id });
+        socket.emit('join room player', { username: this.state.username, room_id: room_id });
         this.props.cb(this.props.username, room_id);
         message.info(`try to join room ${room_id} as ${role}`)
         this.setState({ roomJoined: true })
