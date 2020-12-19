@@ -1,11 +1,30 @@
 import React from 'react';
 import Board from '@sabaki/go-board';
-import { Goban } from '@sabaki/shudan'
+import {Goban} from '@sabaki/shudan'
 import '@sabaki/shudan/css/goban.css';
-import { Button, Switch, Row, Col, Card, Popconfirm, Select, message, notification, Statistic, Modal, Badge, Skeleton, List, Form, Input, Descriptions, Empty } from 'antd';
-import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
-import Countdown, { zeroPad } from 'react-countdown';
-import { socket, server_url } from "./api";
+import {
+    Button,
+    Switch,
+    Row,
+    Col,
+    Card,
+    Popconfirm,
+    Select,
+    message,
+    notification,
+    Statistic,
+    Modal,
+    Badge,
+    Skeleton,
+    List,
+    Form,
+    Input,
+    Descriptions,
+    Empty
+} from 'antd';
+import {CloseOutlined, CheckOutlined} from '@ant-design/icons';
+import Countdown, {zeroPad} from 'react-countdown';
+import {socket, server_url} from "./api";
 import Chatbox from './view/chatbox';
 
 import moveSound0 from './data/0.mp3'
@@ -13,13 +32,13 @@ import moveSound1 from './data/1.mp3'
 import moveSound2 from './data/2.mp3'
 import moveSound3 from './data/3.mp3'
 import moveSound4 from './data/4.mp3'
-import { Redirect } from 'react-router';
-import { startMap, colorToSign, generateMarkerMap, minToMS, MSToMinString, MSToSecString } from './utils';
-import { Link } from 'react-router-dom';
+import {Redirect} from 'react-router';
+import {startMap, colorToSign, generateMarkerMap, minToMS, MSToMinString, MSToSecString} from './utils';
+import {Link} from 'react-router-dom';
 
 
 // const { Countdown } = Statistic;
-const { Option } = Select;
+const {Option} = Select;
 const moveAudio0 = new Audio(moveSound0)
 const moveAudio1 = new Audio(moveSound1)
 const moveAudio2 = new Audio(moveSound2)
@@ -28,14 +47,14 @@ const moveAudio4 = new Audio(moveSound4)
 const moveAudios = [moveAudio0, moveAudio1, moveAudio2, moveAudio2, moveAudio3, moveAudio4]
 const defaultSize = 19
 
-const createTwoWaySwitch = component => ({ stateKey, text, checked }) => {
+const createTwoWaySwitch = component => ({stateKey, text, checked}) => {
     return (
         <label>
             <Switch
-                checkedChildren={<CheckOutlined />}
-                unCheckedChildren={<CloseOutlined />}
+                checkedChildren={<CheckOutlined/>}
+                unCheckedChildren={<CloseOutlined/>}
                 defaultChecked={checked}
-                onClick={() => component.setState(s => ({ [stateKey]: !s[stateKey] }))}
+                onClick={() => component.setState(s => ({[stateKey]: !s[stateKey]}))}
             />
             <span>{text}</span>
         </label>
@@ -60,8 +79,8 @@ class Game extends React.Component {
             animated: false,
             realisticPlacement: false,
             room_id: '',
-            player1: { username: 'waiting', color: 'white' },
-            player2: { username: 'waiting', color: 'black' },
+            player1: {username: 'waiting', color: 'white'},
+            player2: {username: 'waiting', color: 'black'},
             myname: localStorage.getItem('username'),
             mycolor: '',
             score1: 0,
@@ -128,7 +147,9 @@ class Game extends React.Component {
         socket.on('reconnect_error', () => {
             console.log('reconnect_error')
         })
-        socket.on('connect', () => { console.log(socket.id) });
+        socket.on('connect', () => {
+            console.log(socket.id)
+        });
         // receive uptated board from server
         socket.on('move', async (data) => {
             const room = JSON.parse(data);
@@ -176,14 +197,26 @@ class Game extends React.Component {
             }
         })
         socket.on('info', (data) => {
-            const { username } = data;
-            this.setState({ myname: username });
+            const {username} = data;
+            this.setState({myname: username});
         })
 
         socket.on('room bystander change', async (data) => {
             console.log('room bystander change');
             const room = JSON.parse(data);
-            let { room_id, players, gameStarted, bystanders, boardSize, handicap, komi, countdown, countdownTime, reservedTime, randomPlayerColor } = room;
+            let {
+                room_id,
+                players,
+                gameStarted,
+                bystanders,
+                boardSize,
+                handicap,
+                komi,
+                countdown,
+                countdownTime,
+                reservedTime,
+                randomPlayerColor
+            } = room;
             this.setState({
                 room_id: room_id,
                 gameStart: gameStarted,
@@ -258,7 +291,19 @@ class Game extends React.Component {
             console.log('room player change');
             const room = JSON.parse(data);
             console.log(room)
-            let { room_id, players, gameStarted, bystanders, boardSize, handicap, komi, countdown, countdownTime, reservedTime, randomPlayerColor } = room;
+            let {
+                room_id,
+                players,
+                gameStarted,
+                bystanders,
+                boardSize,
+                handicap,
+                komi,
+                countdown,
+                countdownTime,
+                reservedTime,
+                randomPlayerColor
+            } = room;
             this.setState({
                 room_id: room_id,
                 gameStart: gameStarted,
@@ -306,9 +351,9 @@ class Game extends React.Component {
                 })
             }
             if (this.state.myname === this.state.player1.username) {
-                this.setState({ mycolor: this.state.player1.color })
+                this.setState({mycolor: this.state.player1.color})
             } else {
-                this.setState({ mycolor: this.state.player2.color })
+                this.setState({mycolor: this.state.player2.color})
             }
             const endpoint = server_url + 'message/room';
             fetch(`${endpoint}/${encodeURIComponent(room_id)}`, {
@@ -337,7 +382,7 @@ class Game extends React.Component {
         socket.on('game start result', (data) => {
             // this.resetBoard();
             const room = JSON.parse(data);
-            let { room_id, players, currentTurn } = room;
+            let {room_id, players, currentTurn} = room;
             this.setState({
                 gameStart: true,
                 room_id: room_id,
@@ -365,9 +410,9 @@ class Game extends React.Component {
             })
 
             if (this.state.myname === this.state.player1.username) {
-                this.setState({ mycolor: this.state.player1.color })
+                this.setState({mycolor: this.state.player1.color})
             } else {
-                this.setState({ mycolor: this.state.player2.color })
+                this.setState({mycolor: this.state.player2.color})
             }
             if (this.getCurrPlayer().username === this.state.myname && !this.state.isBystander) {
                 this.setState({
@@ -419,7 +464,7 @@ class Game extends React.Component {
                 gameStart: !room.gameFinished,
             })
             if (this.state.end) {
-                const { player1, player2, myname } = this.state;
+                const {player1, player2, myname} = this.state;
                 if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
                     message.success('You Won!');
                 } else if ((room.winner === 1 && player1.username === myname) || (room.winner === 0 && player2.username === myname)) {
@@ -438,7 +483,7 @@ class Game extends React.Component {
                 winner: room.winner,
                 gameStart: false
             })
-            const { player1, player2, myname } = this.state;
+            const {player1, player2, myname} = this.state;
             if ((room.winner === 0 && player1.username === myname) || (room.winner === 1 && player2.username === myname)) {
                 message.success('You Won!');
             } else if ((room.winner === 1 && player1.username === myname) || (room.winner === 0 && player2.username === myname)) {
@@ -450,7 +495,7 @@ class Game extends React.Component {
             // TODO implement terr count 
             const scoreResult = JSON.parse(data);
             console.log('calc score' + scoreResult);
-            const { player1 } = this.state;
+            const {player1} = this.state;
             if (player1.color === 'black') {
                 this.setState({
                     score1: scoreResult.territory[0],
@@ -531,8 +576,8 @@ class Game extends React.Component {
     /**
      * fetch game analysis from server
      * @param {Number} komi Komi for white player
-     * @param {Number} handicap 
-     * @param {2D-Array} signMap 
+     * @param {Number} handicap
+     * @param {2D-Array} signMap
      */
     fetchAnalysisData = (komi, handicap, signMap) => {
         const endpoint = server_url + 'game/analysis/';
@@ -602,7 +647,7 @@ class Game extends React.Component {
     }
 
     /**
-     * reset the board, used for debug purpose, 
+     * reset the board, used for debug purpose,
      * shouldn't be exposed in production
      */
     resetBoard = () => {
@@ -623,7 +668,7 @@ class Game extends React.Component {
         let sign = this.getCurrSign();
         if (!this.state.locked && !this.state.end) {
             try {
-                this.state.board.makeMove(sign, [x, y], { preventOverwrite: true, preventKo: true })
+                this.state.board.makeMove(sign, [x, y], {preventOverwrite: true, preventKo: true})
                 this.setState({
                     locked: true
                 })
@@ -702,7 +747,7 @@ class Game extends React.Component {
             end: true,
             gameStart: false
         })
-        socket.emit('resign', { room_id: this.state.room_id, username: this.state.myname });
+        socket.emit('resign', {room_id: this.state.room_id, username: this.state.myname});
         message.warn('You choose to resign');
         console.log(`you resigned`);
     }
@@ -715,7 +760,7 @@ class Game extends React.Component {
             end: true,
             gameStart: false,
         })
-        socket.emit('timeout', { room_id: this.state.room_id, username: this.state.myname });
+        socket.emit('timeout', {room_id: this.state.room_id, username: this.state.myname});
         message.error('You time run out');
         console.log(`you timed out`);
     }
@@ -724,18 +769,18 @@ class Game extends React.Component {
      * current player initiate a count territory request
      */
     calcScore = () => {
-        socket.emit('calc score', { room_id: this.state.room_id });
+        socket.emit('calc score', {room_id: this.state.room_id});
     }
 
     /**
      * current player initiate a regret request
      */
     regret = () => {
-        socket.emit('regret init', { room_id: this.state.room_id, username: this.state.myname });
+        socket.emit('regret init', {room_id: this.state.room_id, username: this.state.myname});
     }
 
     /**
-     * getter for state.locked 
+     * getter for state.locked
      */
     getLocked = () => {
         return (this.state.locked)
@@ -751,8 +796,8 @@ class Game extends React.Component {
      * game start init settings confirmed, send to server
      */
     gameStartConfirm = (value) => {
-        const { myname, room_id } = this.state;
-        const { boardSize, handicap, komi, countdownChance, countdownTime, reservedTime, playerColor } = value;
+        const {myname, room_id} = this.state;
+        const {boardSize, handicap, komi, countdownChance, countdownTime, reservedTime, playerColor} = value;
         let randomPlayerColor;
         if (playerColor === 'random') {
             randomPlayerColor = true;
@@ -771,8 +816,8 @@ class Game extends React.Component {
             countdownTime,
             reservedTime,
             randomPlayerColor,
-            [myname]: { color: playerColor },
-            [otherName]: { color: otherColor },
+            [myname]: {color: playerColor},
+            [otherName]: {color: otherColor},
         }
         console.log(gameStartSetting)
         socket.emit('game start init', gameStartSetting);
@@ -825,7 +870,7 @@ class Game extends React.Component {
         this.setState({
             scoreModalVisible: false
         })
-        socket.emit('game end init', { room_id: this.state.room_id, username: this.state.myname });
+        socket.emit('game end init', {room_id: this.state.room_id, username: this.state.myname});
     }
 
     /**
@@ -844,7 +889,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, answer: true });
+        socket.emit('game end response', {room_id: this.state.room_id, username: this.state.myname, answer: true});
     }
 
     /**
@@ -854,7 +899,7 @@ class Game extends React.Component {
         this.setState({
             gameEndModalVisible: false
         })
-        socket.emit('game end response', { room_id: this.state.room_id, username: this.state.myname, answer: false })
+        socket.emit('game end response', {room_id: this.state.room_id, username: this.state.myname, answer: false})
     }
 
     /**
@@ -864,7 +909,7 @@ class Game extends React.Component {
         this.setState({
             gameStartResponseModalVisible: false
         })
-        socket.emit('game start response', { room_id: this.state.room_id, username: this.state.myname, answer: true });
+        socket.emit('game start response', {room_id: this.state.room_id, username: this.state.myname, answer: true});
     }
 
     /**
@@ -874,7 +919,7 @@ class Game extends React.Component {
         this.setState({
             gameStartResponseModalVisible: false
         })
-        socket.emit('game start response', { room_id: this.state.room_id, username: this.state.myname, answer: false })
+        socket.emit('game start response', {room_id: this.state.room_id, username: this.state.myname, answer: false})
     }
 
     /**
@@ -897,8 +942,8 @@ class Game extends React.Component {
      * @param {string} message message to be sent
      */
     sendMessage = (message) => {
-        const { myname } = this.state;
-        socket.emit('new message', { username: myname, message: message, })
+        const {myname} = this.state;
+        socket.emit('new message', {username: myname, message: message,})
     }
 
     /**
@@ -936,15 +981,15 @@ class Game extends React.Component {
     /**
      * custom renderer for Countdown component
      */
-    countdownRenderer = ({ hours, minutes, seconds }) => (
-        <Statistic title='Remaining Time' value={`${zeroPad(hours)}:${zeroPad(minutes)}:${zeroPad(seconds)}`} />
+    countdownRenderer = ({hours, minutes, seconds}) => (
+        <Statistic title='Remaining Time' value={`${zeroPad(hours)}:${zeroPad(minutes)}:${zeroPad(seconds)}`}/>
     );
 
     /**
      * callback function for Countdown onPause, pause the countdown
-     * @param {integer} timerNo 
+     * @param {integer} timerNo
      */
-    countdownPause = (timerNo) => ({ total }) => {
+    countdownPause = (timerNo) => ({total}) => {
         this.setState(() => ({
             ['timeLeft' + timerNo]: total
         }))
@@ -962,7 +1007,7 @@ class Game extends React.Component {
                         Please join a room to play
                     </span>
                 }>
-                    <Link to='/joinroom'><Button >Join A Room</Button></Link>
+                    <Link to='/joinroom'><Button>Join A Room</Button></Link>
                     <Link to='/'><Button type="primary">Return to Game Hall</Button></Link>
                 </Empty>
             )
@@ -992,7 +1037,7 @@ class Game extends React.Component {
         } = this.state;
         if (joinFailed) {
             return (
-                <Redirect push to={{ pathname: "/joinroom", state: { username: myname } }} />
+                <Redirect push to={{pathname: "/joinroom", state: {username: myname}}}/>
             );
         }
         const gameStartInitModal = (
@@ -1011,17 +1056,17 @@ class Game extends React.Component {
                 ]}
             >
                 <Form id='game_start_form'
-                    onFinish={this.gameStartConfirm}
-                    initialValues={{
-                        boardSize: this.state.boardSize,
-                        handicap: this.state.handicap,
-                        komi: this.state.komi,
-                        reservedTime: this.state.reservedTime,
-                        countdownChance: this.state.countdownChance,
-                        countdownTime: this.state.countdownTime,
-                        playerColor: 'random'
-                    }}
-                    ref={this.formRef}>
+                      onFinish={this.gameStartConfirm}
+                      initialValues={{
+                          boardSize: this.state.boardSize,
+                          handicap: this.state.handicap,
+                          komi: this.state.komi,
+                          reservedTime: this.state.reservedTime,
+                          countdownChance: this.state.countdownChance,
+                          countdownTime: this.state.countdownTime,
+                          playerColor: 'random'
+                      }}
+                      ref={this.formRef}>
                     <Form.Item
                         name='boardSize'
                         label='Board Size'
@@ -1036,16 +1081,23 @@ class Game extends React.Component {
                         name='handicap'
                         label='Handicap'
                     >
-                        <Input />
+                        <Select>
+                            <Option value={0}>0</Option>
+                            <Option value={2}>2</Option>
+                            <Option value={3}>3</Option>
+                            <Option value={4}>4</Option>
+                            <Option value={5}>5</Option>
+                            <Option value={6}>6</Option>
+                            <Option value={7}>7</Option>
+                            <Option value={8}>8</Option>
+                            <Option value={9}>9</Option>
+                        </Select>
                     </Form.Item>
                     <Form.Item
                         name='komi'
                         label='Komi'
                     >
-                        <Select>
-                            <Option value={6.5}>6.5</Option>
-                            <Option value={7.5}>7.5</Option>
-                        </Select>
+                        <input/>
                     </Form.Item>
                     <Form.Item
                         name='reservedTime'
@@ -1108,17 +1160,23 @@ class Game extends React.Component {
                 <p>Your opponent would like to start the game with the following settings, will you accept?</p>
                 <Descriptions bordered>
                     <Descriptions.Item label='Board Size' span={3}>{this.state.boardSize}</Descriptions.Item>
-                    <Descriptions.Item label='Komi'span={3}>{this.state.komi}</Descriptions.Item>
-                    <Descriptions.Item label='Handicap'span={3}>{this.state.handicap}</Descriptions.Item>
-                    <Descriptions.Item label='Reserved Time'span={3}>{`${MSToMinString(this.state.reservedTime)} minutes`}</Descriptions.Item>
-                    <Descriptions.Item label='Countdown Time'span={3}>{`${MSToSecString(this.state.countdownTime)} seconds`}</Descriptions.Item>
-                    <Descriptions.Item label='Countdown Chances'span={3}>{this.state.countdownChance}</Descriptions.Item>
-                    <Descriptions.Item label='Random colors?'span={3}>{this.state.randomPlayerColor ? 'Yes' : 'No'}</Descriptions.Item>
-                    {this.state.randomPlayerColor ? null: (
-                            this.state.player1.username === myname ? (
-                                <Descriptions.Item label='Your Color'span={3}>{this.state.player1.color}</Descriptions.Item>
-                            ) : <Descriptions.Item label='Your Color'span={3}>{this.state.player2.color}</Descriptions.Item>
-                        )
+                    <Descriptions.Item label='Komi' span={3}>{this.state.komi}</Descriptions.Item>
+                    <Descriptions.Item label='Handicap' span={3}>{this.state.handicap}</Descriptions.Item>
+                    <Descriptions.Item label='Reserved Time'
+                                       span={3}>{`${MSToMinString(this.state.reservedTime)} minutes`}</Descriptions.Item>
+                    <Descriptions.Item label='Countdown Time'
+                                       span={3}>{`${MSToSecString(this.state.countdownTime)} seconds`}</Descriptions.Item>
+                    <Descriptions.Item label='Countdown Chances'
+                                       span={3}>{this.state.countdownChance}</Descriptions.Item>
+                    <Descriptions.Item label='Random colors?'
+                                       span={3}>{this.state.randomPlayerColor ? 'Yes' : 'No'}</Descriptions.Item>
+                    {this.state.randomPlayerColor ? null : (
+                        this.state.player1.username === myname ? (
+                            <Descriptions.Item label='Your Color'
+                                               span={3}>{this.state.player1.color}</Descriptions.Item>
+                        ) : <Descriptions.Item label='Your Color'
+                                               span={3}>{this.state.player2.color}</Descriptions.Item>
+                    )
                     }
                 </Descriptions>
             </Modal>
@@ -1132,11 +1190,11 @@ class Game extends React.Component {
                     <Row>
                         <Col flex='650px'>
                             <Goban vertexSize={30}
-                                signMap={board.signMap}
-                                showCoordinates={showCoordinates}
-                                fuzzyStonePlacement={realisticPlacement}
-                                animateStonePlacement={animated}
-                                onVertexMouseUp={this.mouseClick} />
+                                   signMap={board.signMap}
+                                   showCoordinates={showCoordinates}
+                                   fuzzyStonePlacement={realisticPlacement}
+                                   animateStonePlacement={animated}
+                                   onVertexMouseUp={this.mouseClick}/>
                         </Col>
                         <Col flex='100px'></Col>
                         <Col flex='auto'>
@@ -1145,9 +1203,9 @@ class Game extends React.Component {
                             </Row>
                             <Row>
                                 <Col>
-                                    <Card title={player1.username} style={{ width: 300 }}
-                                        headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
-                                        bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
+                                    <Card title={player1.username} style={{width: 300}}
+                                          headStyle={player1.username === myname ? {backgroundColor: "darkgrey"} : {backgroundColor: "white"}}
+                                          bodyStyle={player1.username === myname ? {backgroundColor: "aliceblue"} : {backgroundColor: "white"}}>
                                         <Statistic title='Rank' value='1d'></Statistic>
                                         <Badge dot={this.isPlayerTurn(0)}>
                                             <Statistic title='Playing' value={player1.color}></Statistic>
@@ -1155,9 +1213,9 @@ class Game extends React.Component {
                                     </Card>
                                 </Col>
                                 <Col>
-                                    <Card title={player2.username} style={{ width: 300 }}
-                                        headStyle={player2.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
-                                        bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
+                                    <Card title={player2.username} style={{width: 300}}
+                                          headStyle={player2.username === myname ? {backgroundColor: "darkgrey"} : {backgroundColor: "white"}}
+                                          bodyStyle={player2.username === myname ? {backgroundColor: "aliceblue"} : {backgroundColor: "white"}}>
                                         <Statistic title='Rank' value='1d'></Statistic>
                                         <Badge dot={this.isPlayerTurn(1)}>
                                             <Statistic title='Playing' value={player2.color}></Statistic>
@@ -1165,7 +1223,7 @@ class Game extends React.Component {
                                     </Card>
                                 </Col>
                             </Row>
-                            <Skeleton />
+                            <Skeleton/>
                             <Row>
                                 <Button onClick={this.gameStart} disabled={isBystander || gameStart}>Start game</Button>
                             </Row>
@@ -1186,10 +1244,10 @@ class Game extends React.Component {
                     footer={[
                         <Button key="Refuse" onClick={this.regretHandleCancel}>
                             Refuse
-                    </Button>,
+                        </Button>,
                         <Button key="Accept" type="primary" onClick={this.regretHandleOk}>
                             Accept
-                    </Button>,
+                        </Button>,
                     ]}
                 >
                     <p>Your opponent would like to regret the last move, will you accept?</p>
@@ -1202,16 +1260,17 @@ class Game extends React.Component {
                     footer={[
                         <Button key="No" onClick={this.countHandleCancel}>
                             No
-                    </Button>,
+                        </Button>,
                         <Button key="Yes" type="primary" onClick={this.countHandleOk}>
                             Yes
-                    </Button>,
+                        </Button>,
                     ]}
                 >
                     <p>Current score is </p>
                     <p>{player1.username} as {player1.color} with {score1} territories</p>
                     <p>{player2.username} as {player2.color} with {score2} territories</p>
-                    <p> with a {scoreDiff > 0 ? 'black lead of' + scoreDiff + 'points' : 'white lead of ' + -1 * scoreDiff + 'points'}, </p>
+                    <p> with
+                        a {scoreDiff > 0 ? 'black lead of' + scoreDiff + 'points' : 'white lead of ' + -1 * scoreDiff + 'points'}, </p>
                     <p> would you like to end the game now? </p>
                 </Modal>
                 <Modal
@@ -1222,10 +1281,10 @@ class Game extends React.Component {
                     footer={[
                         <Button key="Refuse" onClick={this.gameEndHandleCancel}>
                             Refuse
-                    </Button>,
+                        </Button>,
                         <Button key="Accept" type="primary" onClick={this.gameEndHandleOk}>
                             Accept
-                    </Button>,
+                        </Button>,
                     ]}
                 >
                     <p>Your opponent would like to end the game with current board, will you accept?</p>
@@ -1234,14 +1293,14 @@ class Game extends React.Component {
                 <Row>
                     <Col flex='650px'>
                         <Goban vertexSize={30}
-                            signMap={board.signMap}
-                            markerMap={markLastMove && markerMap}
-                            paintMap={showInfluenceMap && influenceMap}
-                            dimmedStones={showDimmedStones ? dimmedStones : []}
-                            showCoordinates={showCoordinates}
-                            fuzzyStonePlacement={realisticPlacement}
-                            animateStonePlacement={animated}
-                            onVertexMouseUp={this.mouseClick} />
+                               signMap={board.signMap}
+                               markerMap={markLastMove && markerMap}
+                               paintMap={showInfluenceMap && influenceMap}
+                               dimmedStones={showDimmedStones ? dimmedStones : []}
+                               showCoordinates={showCoordinates}
+                               fuzzyStonePlacement={realisticPlacement}
+                               animateStonePlacement={animated}
+                               onVertexMouseUp={this.mouseClick}/>
                     </Col>
                     <Col flex='100px'></Col>
                     <Col flex='auto'>
@@ -1250,11 +1309,12 @@ class Game extends React.Component {
                         </Row>
                         <Row>
                             <Col>
-                                <Card title={player1.username} style={{ width: 300 }}
-                                    headStyle={player1.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
-                                    bodyStyle={player1.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
+                                <Card title={player1.username} style={{width: 300}}
+                                      headStyle={player1.username === myname ? {backgroundColor: "darkgrey"} : {backgroundColor: "white"}}
+                                      bodyStyle={player1.username === myname ? {backgroundColor: "aliceblue"} : {backgroundColor: "white"}}>
                                     <Statistic title='Rank' value='1d'></Statistic>
-                                    <Statistic title='Remaining Countdown Chance' value={this.state.countdownLeft1}></Statistic>
+                                    <Statistic title='Remaining Countdown Chance'
+                                               value={this.state.countdownLeft1}></Statistic>
                                     <Countdown
                                         date={this.state.reservedTimeLeft1}
                                         ref={this.setRef1}
@@ -1268,11 +1328,12 @@ class Game extends React.Component {
                                 </Card>
                             </Col>
                             <Col>
-                                <Card title={player2.username} style={{ width: 300 }}
-                                    headStyle={player2.username === myname ? { backgroundColor: "darkgrey" } : { backgroundColor: "white" }}
-                                    bodyStyle={player2.username === myname ? { backgroundColor: "aliceblue" } : { backgroundColor: "white" }}>
+                                <Card title={player2.username} style={{width: 300}}
+                                      headStyle={player2.username === myname ? {backgroundColor: "darkgrey"} : {backgroundColor: "white"}}
+                                      bodyStyle={player2.username === myname ? {backgroundColor: "aliceblue"} : {backgroundColor: "white"}}>
                                     <Statistic title='Rank' value='1d'></Statistic>
-                                    <Statistic title='Remaining Countdown Chance' value={this.state.countdownLeft2}></Statistic>
+                                    <Statistic title='Remaining Countdown Chance'
+                                               value={this.state.countdownLeft2}></Statistic>
                                     {<Countdown
                                         date={this.state.reservedTimeLeft2}
                                         ref={this.setRef2}
@@ -1291,7 +1352,7 @@ class Game extends React.Component {
                                     itemLayout="vertical"
                                     bordered
                                     dataSource={this.state.bystanders}
-                                    locale={{ emptyText: 'No bystander' }}
+                                    locale={{emptyText: 'No bystander'}}
                                     renderItem={user => (
                                         <Statistic title='bystander' value={user.username}></Statistic>
                                     )}
@@ -1299,20 +1360,25 @@ class Game extends React.Component {
                             </Col>
                         </Row>
                         <Row>
-                            <this.toggleSwitch stateKey={'showCoordinates'} text={'show coordinates'} checked={true}></this.toggleSwitch>
+                            <this.toggleSwitch stateKey={'showCoordinates'} text={'show coordinates'}
+                                               checked={true}></this.toggleSwitch>
                         </Row>
                         <Row>
-                            <this.toggleSwitch stateKey={'realisticPlacement'} text={'realistic stone placement'} checked={false}></this.toggleSwitch>
+                            <this.toggleSwitch stateKey={'realisticPlacement'} text={'realistic stone placement'}
+                                               checked={false}></this.toggleSwitch>
                         </Row>
                         <Row>
-                            <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'} checked={false}></this.toggleSwitch>
+                            <this.toggleSwitch stateKey={'animated'} text={'animated stone placement'}
+                                               checked={false}></this.toggleSwitch>
                         </Row>
                         <Row>
-                            <this.toggleSwitch stateKey={'markLastMove'} text={'mark last move'} checked={false}></this.toggleSwitch>
+                            <this.toggleSwitch stateKey={'markLastMove'} text={'mark last move'}
+                                               checked={false}></this.toggleSwitch>
                         </Row>
                         <Row>
                             <Col>
-                                <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass} okText="Yes" cancelText="No" disabled={locked || end || isBystander}>
+                                <Popconfirm placement="left" title='Are you sure to pass?' onConfirm={this.pass}
+                                            okText="Yes" cancelText="No" disabled={locked || end || isBystander}>
                                     <Button disabled={locked || end || isBystander}>Pass</Button>
                                 </Popconfirm>
                             </Col>
@@ -1320,7 +1386,8 @@ class Game extends React.Component {
                                 <Button onClick={this.regret} disabled={end || isBystander}>Regret</Button>
                             </Col>
                             <Col>
-                                <Popconfirm placement="top" title='Are you sure to resign?' onConfirm={this.resign} okText="Yes" cancelText="No" disabled={end || isBystander}>
+                                <Popconfirm placement="top" title='Are you sure to resign?' onConfirm={this.resign}
+                                            okText="Yes" cancelText="No" disabled={end || isBystander}>
                                     <Button disabled={end || isBystander}>Resign</Button>
                                 </Popconfirm>
                             </Col>
@@ -1335,7 +1402,8 @@ class Game extends React.Component {
                             </Col>
                         </Row>
                         <Row>
-                            <Chatbox chats={this.state.chats} username={this.state.myname} room_id={this.state.room_id}></Chatbox>
+                            <Chatbox chats={this.state.chats} username={this.state.myname}
+                                     room_id={this.state.room_id}></Chatbox>
                         </Row>
                     </Col>
                 </Row>
